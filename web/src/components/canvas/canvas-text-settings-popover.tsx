@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { Settings2 } from "lucide-react";
-import { Button, InputNumber } from "antd";
+import { Minus, Plus, Settings2 } from "lucide-react";
+import { Button } from "antd";
 import { useTranslation } from "react-i18next";
 
 import { reasoningEffortLabel, TextSettingsPanel } from "@/components/text-settings-panel";
@@ -89,21 +89,48 @@ function TextSettingsPortal({ buttonRect, panelRef, placement, theme, config, co
         width,
         left: Math.max(margin, Math.min(window.innerWidth - width - margin, left)),
         ...(topPlacement ? { bottom: window.innerHeight - buttonRect.top + gap } : { top: buttonRect.bottom + gap }),
-        background: theme.toolbar.panel,
+        background: theme.node.panel,
+        border: "1px solid " + theme.node.stroke,
         borderRadius: 18,
-        boxShadow: "0 18px 54px rgba(28, 25, 23, 0.16)",
+        boxShadow: "0 20px 64px rgba(0, 0, 0, 0.32)",
         padding: 18,
         overscrollBehavior: "contain",
         color: theme.node.text,
     } as const;
 
+    const safeCount = Math.max(1, Math.min(15, Math.floor(Math.abs(Number(count)) || 1)));
+
     return createPortal(
-        <div ref={panelRef} style={style} onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()} onWheel={(event) => event.stopPropagation()}>
+        <div ref={panelRef} className="canvas-settings-popover canvas-image-settings-popover" style={style} onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()} onWheel={(event) => event.stopPropagation()}>
             <TextSettingsPanel config={config} onConfigChange={onConfigChange} theme={theme} />
             {onCountChange ? (
                 <div className="mt-4 space-y-2.5">
                     <div className="text-sm font-medium" style={{ color: theme.node.muted }}>{t("settingsPanels.text.count")}</div>
-                    <InputNumber className="w-full" min={1} max={15} precision={0} value={count} onChange={(value) => onCountChange(value || 1)} />
+                    <div className="flex h-9 items-center justify-between rounded-xl border px-3 text-sm" style={{ background: theme.node.fill, borderColor: theme.node.stroke, color: theme.node.text }}>
+                        <span>{safeCount}</span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                className="grid size-7 place-items-center rounded-lg transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
+                                disabled={safeCount <= 1}
+                                aria-label="减少生成数量"
+                                onMouseDown={(event) => event.stopPropagation()}
+                                onClick={() => onCountChange(Math.max(1, safeCount - 1))}
+                            >
+                                <Minus className="size-3.5" />
+                            </button>
+                            <button
+                                type="button"
+                                className="grid size-7 place-items-center rounded-lg transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
+                                disabled={safeCount >= 15}
+                                aria-label="增加生成数量"
+                                onMouseDown={(event) => event.stopPropagation()}
+                                onClick={() => onCountChange(Math.min(15, safeCount + 1))}
+                            >
+                                <Plus className="size-3.5" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             ) : null}
         </div>,
