@@ -206,6 +206,11 @@ export function InfiniteCanvas({ containerRef, viewport, tool, backgroundMode = 
     const temporaryTool = isControlPressed || isSpacePressed;
     const activeTool = temporaryTool ? (tool === "select" ? "pan" : "select") : tool;
     const cursor = isPanning ? "grabbing" : activeTool === "pan" ? "grab" : undefined;
+    const canvasChildren = React.Children.toArray(children);
+    // The existing reference-selection hint is authored as a direct InfiniteCanvas child.
+    // Keep that transient instruction in screen space so pan/zoom never moves or scales it.
+    const screenOverlayChildren = canvasChildren.filter(isReferenceSelectionScreenOverlay);
+    const worldChildren = canvasChildren.filter((child) => !isReferenceSelectionScreenOverlay(child));
 
     return (
         <div
@@ -226,10 +231,21 @@ export function InfiniteCanvas({ containerRef, viewport, tool, backgroundMode = 
                     transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.k})`,
                 }}
             >
-                {children}
+                {worldChildren}
             </div>
+            {screenOverlayChildren.map((child) =>
+                React.isValidElement<{ className?: string }>(child)
+                    ? React.cloneElement(child, { className: `${child.props.className || ""} whitespace-nowrap` })
+                    : child,
+            )}
         </div>
     );
+}
+
+function isReferenceSelectionScreenOverlay(child: React.ReactNode) {
+    if (!React.isValidElement<{ className?: string }>(child) || child.type !== "button") return false;
+    const className = child.props.className;
+    return typeof className === "string" && className.includes("left-1/2") && className.includes("top-4") && className.includes("z-[90]");
 }
 
 function CanvasGrid({ viewport, mode }: { viewport: ViewportTransform; mode: CanvasBackgroundMode }) {
