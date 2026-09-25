@@ -14,7 +14,8 @@ import { CanvasPromptChipInput } from "./canvas-prompt-chip-input";
 import { CanvasVideoSettingsPopover } from "./canvas-video-settings-popover";
 import { CanvasTextSettingsPopover } from "./canvas-text-settings-popover";
 import { CanvasCameraControl } from "./tiger-camera/canvas-camera-control";
-import { CanvasNodeType, type CanvasGenerationMode, type CanvasNodeData } from "@/types/canvas";
+import { applyCameraPrompt, parseCameraControlFromPrompt, stripCameraPrompt } from "./tiger-camera/canvas-camera";
+import { CanvasNodeType, type CanvasGenerationMode, type CanvasNodeData, type CameraControlOptions } from "@/types/canvas";
 import type { CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
 import { CanvasNodeReferenceBar } from "./canvas-node-reference-bar";
 
@@ -46,19 +47,34 @@ export function CanvasNodePromptPanel({ node, nodes, isRunning, onPromptChange, 
     const hasTextContent = node.type === CanvasNodeType.Text && Boolean(node.metadata?.content?.trim());
     const hasImageContent = node.type === CanvasNodeType.Image && Boolean(node.metadata?.content);
     const isEditingExistingContent = hasTextContent || hasImageContent;
-    const [prompt, setPrompt] = useState(node.metadata?.composerContent ?? node.metadata?.prompt ?? "");
+    const storedPrompt = node.metadata?.composerContent ?? node.metadata?.prompt ?? "";
+    const recoveredCameraControl = node.metadata?.cameraControl ?? parseCameraControlFromPrompt(node.metadata?.prompt ?? storedPrompt);
+    const [prompt, setPrompt] = useState(stripCameraPrompt(storedPrompt));
     const [expanded, setExpanded] = useState(false);
 
-    // Restore prompts only when switching nodes; preserve the current input after generation on the same node.
+    // Restore prompts only when switching nodes; hide the compatibility-layer camera suffix from the editor.
     useEffect(() => {
-        setPrompt(node.metadata?.composerContent ?? node.metadata?.prompt ?? "");
+        setPrompt(stripCameraPrompt(node.metadata?.composerContent ?? node.metadata?.prompt ?? ""));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [node.id]);
+
+    // Generated basket nodes may have the tiger camera block embedded in the saved prompt. Recover it once into metadata.
+    useEffect(() => {
+        if ((mode !== "image" && mode !== "video") || node.metadata?.cameraControl) return;
+        const inferred = parseCameraControlFromPrompt(node.metadata?.prompt ?? "");
+        if (inferred) onConfigChange(node.id, { cameraControl: inferred });
+    }, [mode, node.id, node.metadata?.cameraControl, node.metadata?.prompt, onConfigChange]);
 
     const updatePrompt = (value: string) => {
         setPrompt(value);
         if (isEditingExistingContent) onConfigChange(node.id, { composerContent: value });
         else onPromptChange(node.id, value);
+    };
+
+    const updateCameraControl = (cameraControl: CameraControlOptions) => {
+        // Keep basket retry metadata aligned with tiger's current camera settings while the editor continues to show only the user's prompt.
+        const rawPrompt = stripCameraPrompt(node.metadata?.composerContent ?? node.metadata?.prompt ?? prompt);
+        onConfigChange(node.id, { cameraControl, prompt: applyCameraPrompt(rawPrompt, cameraControl) });
     };
 
     const submit = () => {
@@ -108,13 +124,13 @@ export function CanvasNodePromptPanel({ node, nodes, isRunning, onPromptChange, 
                                 onMissingConfig={() => openConfigDialog(true)}
                                 onOpenChange={onImageSettingsOpenChange}
                             />
-                            <CanvasCameraControl value={node.metadata?.cameraControl} onChange={(cameraControl) => onConfigChange(node.id, { cameraControl })} />
+                            <CanvasCameraControl value={recoveredCameraControl} onChange={updateCameraControl} />
                         </>
                     ) : mode === "video" ? (
                         <>
                             <ModelPicker config={config} value={config.model} onChange={(model) => onConfigChange(node.id, { model })} capability="video" onMissingConfig={() => openConfigDialog(true)} className="max-w-[190px]" />
                             <CanvasVideoSettingsPopover config={config} buttonClassName="!h-10 !max-w-[220px] !justify-start !rounded-full !px-3" onConfigChange={(key, value) => onConfigChange(node.id, videoConfigPatch(key, value))} />
-                            <CanvasCameraControl value={node.metadata?.cameraControl} onChange={(cameraControl) => onConfigChange(node.id, { cameraControl })} />
+                            <CanvasCameraControl value={recoveredCameraControl} onChange={updateCameraControl} />
                         </>
                     ) : mode === "audio" ? (
                         <>
