@@ -58,9 +58,7 @@ export function CanvasCameraControl({ value, onChange, buttonClassName }: Canvas
         if (!open) return;
 
         const trigger = buttonRef.current;
-        const node = trigger?.closest<HTMLElement>("[data-node-id]");
-        const canvasLayer = node?.parentElement;
-        if (!trigger || !node || !canvasLayer) return;
+        if (!trigger) return;
 
         const syncPosition = () => {
             const next = trigger.getBoundingClientRect();
@@ -81,17 +79,12 @@ export function CanvasCameraControl({ value, onChange, buttonClassName }: Canvas
             setOpen(false);
         };
 
-        const observer = new MutationObserver(syncPosition);
-        observer.observe(node, { attributes: true, attributeFilter: ["style"] });
-        observer.observe(canvasLayer, { attributes: true, attributeFilter: ["style"] });
-
         syncPosition();
         window.addEventListener("resize", syncPosition);
         window.addEventListener("scroll", syncPosition, true);
         window.addEventListener("pointerdown", closeOnOutsidePointer, true);
 
         return () => {
-            observer.disconnect();
             window.removeEventListener("resize", syncPosition);
             window.removeEventListener("scroll", syncPosition, true);
             window.removeEventListener("pointerdown", closeOnOutsidePointer, true);
