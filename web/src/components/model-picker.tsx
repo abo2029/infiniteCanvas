@@ -63,8 +63,8 @@ export function ModelPicker({ config, value, onChange, capability, className, fu
                 data-canvas-no-zoom
                 className="z-[1200] w-80 max-w-[calc(100vw-24px)] rounded-xl border border-border/70 bg-popover p-1 text-[13px] shadow-xl"
                 position="popper"
-                align="start"
-                side="bottom"
+                align="center"
+                side="top"
                 sideOffset={6}
                 onPointerDown={(event) => event.stopPropagation()}
                 onMouseDown={(event) => event.stopPropagation()}
