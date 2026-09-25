@@ -50,6 +50,18 @@ body > div[style*="position: fixed"][style*="width: 356px"] .text-sm,
     line-height: 18px !important;
 }
 
+body > div[style*="position: fixed"][style*="width: 356px"] .text-sm.font-medium,
+.canvas-image-settings-popover .text-sm.font-medium {
+    font-size: var(--canvas-fs-label) !important;
+    line-height: 16px !important;
+}
+
+body > div[style*="position: fixed"][style*="width: 356px"] textarea.text-sm,
+.canvas-image-settings-popover textarea.text-sm {
+    font-size: var(--canvas-fs-body) !important;
+    line-height: 20px !important;
+}
+
 body > div[style*="position: fixed"][style*="width: 356px"] .text-xs,
 .canvas-image-settings-popover .text-xs {
     font-size: var(--canvas-fs-label) !important;
