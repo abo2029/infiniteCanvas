@@ -29,6 +29,14 @@
     font-size: var(--canvas-fs-label);
 }
 
+/* Config-node settings triggers are Ant text buttons, so explicitly restore the
+ * same visible control border used by the neighboring model control. */
+.node-element .canvas-compact-control.ant-btn {
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: color-mix(in srgb, currentColor 26%, transparent) !important;
+}
+
 /* Prompt body remains the 14px reading baseline. */
 .node-element [data-canvas-no-zoom] textarea,
 .node-element [data-canvas-no-zoom] [contenteditable="true"] {
@@ -103,24 +111,24 @@ body > div[style*="position: fixed"][style*="width: 356px"] button.relative.h-\[
     isolation: isolate;
 }
 
-/* Camera is portaled to document.body, so scope it by its unique fixed 900px tiger panel. */
-div[style*="width: 900px"][style*="z-index: 1200"] .text-base {
+/* Camera is portaled to document.body. Keep its text hierarchy aligned with all
+ * other child popovers; the title itself is also explicitly 15px in the component. */
+div[style*="z-index: 1200"] .text-base {
     font-size: var(--canvas-fs-title) !important;
     line-height: 20px !important;
 }
 
-div[style*="width: 900px"][style*="z-index: 1200"] .text-sm {
+div[style*="z-index: 1200"] .text-sm {
     font-size: var(--canvas-fs-label) !important;
     line-height: 16px !important;
 }
 
-div[style*="width: 900px"][style*="z-index: 1200"] .text-xs {
+div[style*="z-index: 1200"] .text-xs {
     font-size: var(--canvas-fs-caption) !important;
     line-height: 15px !important;
 }
 
 /* Reviewed popup behavior: child popups close by trigger/outside click, not an X button. */
-div[style*="width: 900px"][style*="z-index: 1200"] button[aria-label="关闭"],
 .node-element [data-canvas-no-zoom].rounded-2xl.border.p-3.shadow-2xl.backdrop-blur > .mb-2 > .ant-btn {
     display: none !important;
 }
