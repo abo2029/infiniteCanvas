@@ -111,19 +111,19 @@ body > div[style*="position: fixed"][style*="width: 356px"] button.relative.h-\[
     isolation: isolate;
 }
 
-/* Camera is portaled to document.body. Keep its text hierarchy aligned with all
- * other child popovers; the title itself is also explicitly 15px in the component. */
-div[style*="z-index: 1200"] .text-base {
+/* Camera is now a first-class canvas child popover. Keep its typography scoped
+ * to the camera panel so the 356px settings portals retain their own hierarchy. */
+.canvas-camera-control-popover .text-base {
     font-size: var(--canvas-fs-title) !important;
     line-height: 20px !important;
 }
 
-div[style*="z-index: 1200"] .text-sm {
+.canvas-camera-control-popover .text-sm {
     font-size: var(--canvas-fs-label) !important;
     line-height: 16px !important;
 }
 
-div[style*="z-index: 1200"] .text-xs {
+.canvas-camera-control-popover .text-xs {
     font-size: var(--canvas-fs-caption) !important;
     line-height: 15px !important;
 }
