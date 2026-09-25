@@ -25,6 +25,14 @@ export type CanvasNodeStatus = "idle" | "success" | "loading" | "error";
 export type CanvasGenerationMode = "text" | "image" | "video" | "audio";
 export type CanvasImageGenerationType = "generation" | "edit";
 
+export type CameraControlOptions = {
+    enabled: boolean;
+    camera: string;
+    lens: string;
+    focalLength: number;
+    aperture: number;
+};
+
 export type CanvasNodeImage = {
     id: string;
     status: CanvasNodeStatus;
@@ -71,6 +79,7 @@ export type CanvasNodeMetadata = {
     audioFormat?: string;
     audioSpeed?: string;
     audioInstructions?: string;
+    cameraControl?: CameraControlOptions;
     references?: string[];
     naturalWidth?: number;
     naturalHeight?: number;
