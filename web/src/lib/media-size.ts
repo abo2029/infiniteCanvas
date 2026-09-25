@@ -33,15 +33,8 @@ export function parseAspectRatio(value: string) {
     return { width, height };
 }
 
-export const videoRatioOptions = [
-    { value: "1:1", width: 1, height: 1 },
-    { value: "3:4", width: 3, height: 4 },
-    { value: "4:3", width: 4, height: 3 },
-    { value: "16:9", width: 16, height: 9 },
-    { value: "9:16", width: 9, height: 16 },
-    { value: "21:9", width: 21, height: 9 },
-    { value: "auto", width: 0, height: 0 },
-] as const;
+// Image and video now intentionally share the same reviewed aspect-ratio choices.
+export const videoRatioOptions = mediaRatioOptions;
 
 export const VIDEO_SECONDS_MIN = 4;
 export const VIDEO_SECONDS_MAX = 30;
