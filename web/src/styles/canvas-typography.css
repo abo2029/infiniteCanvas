@@ -1,0 +1,53 @@
+/* Canvas-only typography normalization approved in the UI review.
+ * Keep this file intentionally narrow: it should not redesign unrelated app UI.
+ */
+:root {
+    --canvas-fs-caption: 11px;
+    --canvas-fs-label: 12px;
+    --canvas-fs-control: 13px;
+    --canvas-fs-body: 14px;
+    --canvas-fs-title: 15px;
+    --canvas-fs-heading: 16px;
+}
+
+/* Node title shown above selected / hovered nodes. */
+.node-element > .absolute.left-3.top-\[-28px\] input,
+.node-element > .absolute.left-3.top-\[-28px\] button {
+    font-size: var(--canvas-fs-title) !important;
+    line-height: 20px !important;
+}
+
+/* Controls inside canvas nodes / prompt panels use the shared 13px control size. */
+.node-element .ant-btn,
+.node-element .canvas-compact-control,
+.node-element .canvas-composer-model-picker {
+    font-size: var(--canvas-fs-control) !important;
+    line-height: 18px;
+}
+
+.canvas-config-mode {
+    font-size: var(--canvas-fs-label);
+}
+
+/* Prompt body remains the 14px reading baseline. */
+.node-element [data-canvas-no-zoom] textarea,
+.node-element [data-canvas-no-zoom] [contenteditable="true"] {
+    font-size: var(--canvas-fs-body);
+    line-height: 20px;
+}
+
+/* Camera is portaled to document.body, so scope it by its unique fixed 900px tiger panel. */
+div[style*="width: 900px"][style*="z-index: 1200"] .text-base {
+    font-size: var(--canvas-fs-title) !important;
+    line-height: 20px !important;
+}
+
+div[style*="width: 900px"][style*="z-index: 1200"] .text-sm {
+    font-size: var(--canvas-fs-label) !important;
+    line-height: 16px !important;
+}
+
+div[style*="width: 900px"][style*="z-index: 1200"] .text-xs {
+    font-size: var(--canvas-fs-caption) !important;
+    line-height: 15px !important;
+}
