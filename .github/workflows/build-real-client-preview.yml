@@ -18,36 +18,55 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
+          bun-version: 1.3.13
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps --no-audit --no-fund
+        run: bun install
 
       - name: Build web client
-        run: npm run build
+        run: bun run build
 
       - name: Add local preview launcher
         shell: bash
         run: |
+          cat > dist/_preview_server.py <<'PY'
+          from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+          from pathlib import Path
+          import os
+
+          ROOT = Path(__file__).resolve().parent
+          os.chdir(ROOT)
+
+          class SPAHandler(SimpleHTTPRequestHandler):
+              def do_GET(self):
+                  path = self.path.split('?', 1)[0].split('#', 1)[0]
+                  target = ROOT / path.lstrip('/')
+                  if path != '/' and not target.exists():
+                      self.path = '/index.html'
+                  return super().do_GET()
+
+          print('Infinite Canvas preview: http://127.0.0.1:4173/canvas')
+          ThreadingHTTPServer(('127.0.0.1', 4173), SPAHandler).serve_forever()
+          PY
+
           cat > dist/START_PREVIEW_WINDOWS.bat <<'BAT'
           @echo off
           cd /d %~dp0
+          start "" http://127.0.0.1:4173/canvas
           where py >nul 2>nul
           if %errorlevel%==0 (
-            start "" http://127.0.0.1:4173/canvas
-            py -m http.server 4173 --bind 127.0.0.1
+            py _preview_server.py
             exit /b
           )
           where python >nul 2>nul
           if %errorlevel%==0 (
-            start "" http://127.0.0.1:4173/canvas
-            python -m http.server 4173 --bind 127.0.0.1
+            python _preview_server.py
             exit /b
           )
-          echo Python was not found. Please run this folder with any static HTTP server.
+          echo Python was not found. Install Python 3 or serve this folder with another static web server.
           pause
           BAT
 
