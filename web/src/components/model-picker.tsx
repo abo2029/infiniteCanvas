@@ -64,7 +64,7 @@ export function ModelPicker({ config, value, onChange, capability, className, fu
             </SelectTrigger>
             <SelectContent
                 data-canvas-no-zoom
-                className="canvas-model-picker-content z-[1200] w-80 max-w-[calc(100vw-24px)] rounded-xl border p-1 text-[13px] shadow-xl"
+                className="canvas-model-picker-content z-[1200] w-max min-w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-24px)] rounded-xl border p-1 text-[13px] shadow-xl"
                 style={{ background: theme.node.panel, borderColor: theme.node.stroke, color: theme.node.text }}
                 position="popper"
                 align="center"
@@ -102,7 +102,7 @@ function emptyModelLabel(config: AiConfig, capability?: ModelCapability) {
 
 function ModelOptionLabel({ config, model, selected, theme }: { config: AiConfig; model: string; selected: boolean; theme: CanvasTheme }) {
     return (
-        <span className="flex min-w-0 flex-1 items-center justify-start gap-2 text-left">
+        <span className="flex w-max min-w-full items-center justify-start gap-2 text-left">
             <span
                 className="grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] text-[10px] font-bold leading-none"
                 style={{
@@ -114,7 +114,7 @@ function ModelOptionLabel({ config, model, selected, theme }: { config: AiConfig
             >
                 ✓
             </span>
-            <span className="min-w-0 flex-1 truncate text-left">{modelOptionLabel(config, model)}</span>
+            <span className="whitespace-nowrap text-left">{modelOptionLabel(config, model)}</span>
         </span>
     );
 }
