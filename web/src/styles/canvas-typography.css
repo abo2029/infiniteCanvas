@@ -94,3 +94,20 @@ div[style*="width: 900px"][style*="z-index: 1200"] .text-xs {
     font-size: var(--canvas-fs-caption) !important;
     line-height: 15px !important;
 }
+
+/* Reviewed popup behavior: child popups close by trigger/outside click, not an X button. */
+div[style*="width: 900px"][style*="z-index: 1200"] button[aria-label="关闭"],
+.node-element [data-canvas-no-zoom].rounded-2xl.border.p-3.shadow-2xl.backdrop-blur > .mb-2 > .ant-btn {
+    display: none !important;
+}
+
+/* Model choices use the reviewed left-aligned radio/check treatment. */
+.canvas-model-picker-content [data-slot="select-item"],
+.canvas-model-picker-content [data-slot="select-item"] > span:last-child {
+    text-align: left;
+}
+
+.canvas-model-picker-content [data-slot="select-item"] > span:last-child {
+    width: 100%;
+    justify-content: flex-start;
+}
