@@ -68,54 +68,15 @@ body > div[style*="position: fixed"][style*="width: 356px"] .text-xs,
     line-height: 16px !important;
 }
 
-/* Image settings: keep the original rows, but present both boolean options as
- * simple circular check controls instead of sliding switches. */
-.canvas-image-settings-popover .ant-switch {
-    box-sizing: border-box !important;
-    width: 18px !important;
-    min-width: 18px !important;
-    height: 18px !important;
-    min-height: 18px !important;
-    padding: 0 !important;
-    border: 1.5px solid color-mix(in srgb, var(--foreground) 48%, transparent) !important;
-    border-radius: 999px !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    line-height: 16px !important;
+/* Fixed ratio slots keep their frame still; only the inner content rolls. */
+@keyframes ratio-slot-out {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(112%); opacity: 0; }
 }
 
-.canvas-image-settings-popover .ant-switch .ant-switch-handle,
-.canvas-image-settings-popover .ant-switch .ant-switch-inner {
-    display: none !important;
-}
-
-.canvas-image-settings-popover .ant-switch.ant-switch-checked {
-    border-color: var(--foreground) !important;
-    background: var(--foreground) !important;
-}
-
-.canvas-image-settings-popover .ant-switch.ant-switch-checked::after {
-    content: "✓";
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    color: var(--background);
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
-}
-
-/* The source translation currently reads “16 倍数对齐”. For this reviewed
- * canvas control, display the requested wording without touching global i18n. */
-.canvas-image-settings-popover .flex.items-center.gap-2 > span.text-xs.font-medium:first-child {
-    font-size: 0 !important;
-}
-
-.canvas-image-settings-popover .flex.items-center.gap-2 > span.text-xs.font-medium:first-child::after {
-    content: "按16倍数对齐";
-    font-size: var(--canvas-fs-label);
-    line-height: 16px;
+@keyframes ratio-slot-in {
+    0% { transform: translateY(-112%); opacity: 0.18; }
+    100% { transform: translateY(0); opacity: 1; }
 }
 
 /* Camera is portaled to document.body, so scope it by its unique fixed 900px tiger panel. */
