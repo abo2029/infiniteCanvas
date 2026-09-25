@@ -4,7 +4,9 @@ import { useTranslation } from "react-i18next";
 
 import i18n from "@/i18n";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { canvasThemes, type CanvasTheme } from "@/lib/canvas-theme";
 import { cn } from "@/lib/utils";
+import { useThemeStore } from "@/stores/use-theme-store";
 import { modelOptionLabel, modelOptionName, selectableModelsByCapability, type AiConfig, type ModelCapability } from "@/stores/use-config-store";
 
 type ModelPickerProps = {
@@ -20,6 +22,7 @@ type ModelPickerProps = {
 
 export function ModelPicker({ config, value, onChange, capability, className, fullWidth = false, placeholder, onMissingConfig }: ModelPickerProps) {
     const { t } = useTranslation();
+    const theme = canvasThemes[useThemeStore((state) => state.theme)];
     const pickerId = useId();
     const [open, setOpen] = useState(false);
     const options = useMemo(() => Array.from(new Set([...(config.channelMode === "local" && !capability ? [value] : []), ...selectableModelsByCapability(config, capability)].filter((model): model is string => Boolean(model)))), [capability, config, value]);
@@ -61,7 +64,8 @@ export function ModelPicker({ config, value, onChange, capability, className, fu
             </SelectTrigger>
             <SelectContent
                 data-canvas-no-zoom
-                className="z-[1200] w-80 max-w-[calc(100vw-24px)] rounded-xl border border-border/70 bg-popover p-1 text-[13px] shadow-xl"
+                className="canvas-model-picker-content z-[1200] w-80 max-w-[calc(100vw-24px)] rounded-xl border p-1 text-[13px] shadow-xl"
+                style={{ background: theme.node.panel, borderColor: theme.node.stroke, color: theme.node.text }}
                 position="popper"
                 align="center"
                 side="top"
@@ -71,12 +75,17 @@ export function ModelPicker({ config, value, onChange, capability, className, fu
             >
                 {options.length ? (
                     options.map((model) => (
-                        <SelectItem key={model} value={model} textValue={modelOptionLabel(config, model)}>
-                            <ModelLabel config={config} model={model} />
+                        <SelectItem
+                            key={model}
+                            value={model}
+                            textValue={modelOptionLabel(config, model)}
+                            className="!justify-start !px-2 !py-1.5 text-left [&>span:first-child]:hidden"
+                        >
+                            <ModelOptionLabel config={config} model={model} selected={current === model} theme={theme} />
                         </SelectItem>
                     ))
                 ) : (
-                    <SelectItem value="__empty__" disabled>
+                    <SelectItem value="__empty__" disabled className="!justify-start !px-2 text-left [&>span:first-child]:hidden">
                         {emptyModelLabel(config, capability)}
                     </SelectItem>
                 )}
@@ -91,11 +100,21 @@ function emptyModelLabel(config: AiConfig, capability?: ModelCapability) {
     return config.models.length ? i18n.t("settingsPanels.model.noMatch", { capability: label }) : i18n.t("settingsPanels.model.addFirst");
 }
 
-function ModelLabel({ config, model }: { config: AiConfig; model: string }) {
+function ModelOptionLabel({ config, model, selected, theme }: { config: AiConfig; model: string; selected: boolean; theme: CanvasTheme }) {
     return (
-        <span className="flex min-w-0 items-center gap-2">
-            <ModelIcon model={model} />
-            <span className="truncate">{modelOptionLabel(config, model)}</span>
+        <span className="flex min-w-0 flex-1 items-center justify-start gap-2 text-left">
+            <span
+                className="grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] text-[10px] font-bold leading-none"
+                style={{
+                    borderColor: selected ? theme.node.text : theme.node.muted,
+                    background: selected ? theme.node.text : "transparent",
+                    color: selected ? theme.node.panel : "transparent",
+                }}
+                aria-hidden="true"
+            >
+                ✓
+            </span>
+            <span className="min-w-0 flex-1 truncate text-left">{modelOptionLabel(config, model)}</span>
         </span>
     );
 }
