@@ -89,9 +89,10 @@ function AudioSettingsPortal({ buttonRect, panelRef, placement, theme, config, o
         width,
         left: Math.max(margin, Math.min(window.innerWidth - width - margin, left)),
         ...(topPlacement ? { bottom: window.innerHeight - buttonRect.top + gap, maxHeight: Math.max(260, buttonRect.top - margin * 2) } : { top: buttonRect.bottom + gap, maxHeight: Math.max(260, window.innerHeight - buttonRect.bottom - margin * 2) }),
-        background: theme.toolbar.panel,
+        background: theme.node.panel,
+        border: "1px solid " + theme.node.stroke,
         borderRadius: 18,
-        boxShadow: "0 18px 54px rgba(28, 25, 23, 0.16)",
+        boxShadow: "0 20px 64px rgba(0, 0, 0, 0.32)",
         padding: 18,
         overflowY: "auto",
         overscrollBehavior: "contain",
@@ -101,7 +102,7 @@ function AudioSettingsPortal({ buttonRect, panelRef, placement, theme, config, o
     return createPortal(
         <div
             ref={panelRef}
-            className="canvas-image-settings-popover"
+            className="canvas-settings-popover canvas-image-settings-popover"
             style={style}
             onPointerDown={(event) => event.stopPropagation()}
             onMouseDown={(event) => event.stopPropagation()}
