@@ -18,7 +18,7 @@ type CanvasTextSettingsPopoverProps = {
     placement?: "topLeft" | "top" | "topRight" | "bottomLeft" | "bottom" | "bottomRight";
 };
 
-export function CanvasTextSettingsPopover({ config, onConfigChange, count, onCountChange, buttonClassName, placement = "topLeft" }: CanvasTextSettingsPopoverProps) {
+export function CanvasTextSettingsPopover({ config, onConfigChange, count, onCountChange, buttonClassName, placement = "top" }: CanvasTextSettingsPopoverProps) {
     const { t } = useTranslation();
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
     const buttonRef = useRef<HTMLSpanElement>(null);
@@ -28,19 +28,27 @@ export function CanvasTextSettingsPopover({ config, onConfigChange, count, onCou
 
     useEffect(() => {
         if (!open) return;
+        let frame = 0;
         const syncPosition = () => setButtonRect(buttonRef.current?.getBoundingClientRect() || null);
+        const scheduleSync = () => {
+            if (frame) return;
+            frame = window.requestAnimationFrame(() => { frame = 0; syncPosition(); });
+        };
         const closeOnOutsidePointer = (event: PointerEvent) => {
             const target = event.target;
             if (!(target instanceof Node) || buttonRef.current?.contains(target) || panelRef.current?.contains(target)) return;
             setOpen(false);
         };
         syncPosition();
-        window.addEventListener("resize", syncPosition);
-        window.addEventListener("scroll", syncPosition, true);
+        window.addEventListener("resize", scheduleSync);
+        window.addEventListener("scroll", scheduleSync, true);
+        window.addEventListener("wheel", scheduleSync, true);
         window.addEventListener("pointerdown", closeOnOutsidePointer, true);
         return () => {
-            window.removeEventListener("resize", syncPosition);
-            window.removeEventListener("scroll", syncPosition, true);
+            if (frame) window.cancelAnimationFrame(frame);
+            window.removeEventListener("resize", scheduleSync);
+            window.removeEventListener("scroll", scheduleSync, true);
+            window.removeEventListener("wheel", scheduleSync, true);
             window.removeEventListener("pointerdown", closeOnOutsidePointer, true);
         };
     }, [open]);
@@ -73,10 +81,8 @@ function TextSettingsPortal({ buttonRect, panelRef, placement, theme, config, co
     const width = 356;
     const gap = 8;
     const margin = 12;
-    const alignRight = placement?.endsWith("Right");
-    const alignCenter = placement === "top" || placement === "bottom";
-    const left = alignCenter ? buttonRect.left + buttonRect.width / 2 - width / 2 : alignRight ? buttonRect.right - width : buttonRect.left;
-    const topPlacement = placement?.startsWith("top");
+    const left = buttonRect.left + buttonRect.width / 2 - width / 2;
+    const topPlacement = placement?.startsWith("top") ?? true;
     const style = {
         position: "fixed",
         zIndex: 1200,
@@ -87,11 +93,12 @@ function TextSettingsPortal({ buttonRect, panelRef, placement, theme, config, co
         borderRadius: 18,
         boxShadow: "0 18px 54px rgba(28, 25, 23, 0.16)",
         padding: 18,
+        overscrollBehavior: "contain",
         color: theme.node.text,
     } as const;
 
     return createPortal(
-        <div ref={panelRef} style={style} onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
+        <div ref={panelRef} style={style} onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()} onWheel={(event) => event.stopPropagation()}>
             <TextSettingsPanel config={config} onConfigChange={onConfigChange} theme={theme} />
             {onCountChange ? (
                 <div className="mt-4 space-y-2.5">
