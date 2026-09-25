@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowUp, LoaderCircle, Maximize2, Square } from "lucide-react";
+import { LoaderCircle, Maximize2, Square } from "lucide-react";
 import { Button, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -34,7 +34,7 @@ type CanvasNodePromptPanelProps = {
     onDisconnectReference?: (fromNodeId: string, toNodeId: string) => void;
     onStartReferenceSelection?: (nodeId: string) => void;
     onImageSettingsOpenChange?: (open: boolean) => void;
-    modeOverride?: CanvasNodeGenerationMode; // Plugin nodes set their generation type through useBuiltinPanel.mode.
+    modeOverride?: CanvasNodeGenerationMode;
 };
 
 export function CanvasNodePromptPanel({ node, nodes, isRunning, onPromptChange, onConfigChange, onGenerate, onStop, mentionReferences = [], connectedNodes = [], onDisconnectReference, onStartReferenceSelection, onImageSettingsOpenChange, modeOverride }: CanvasNodePromptPanelProps) {
@@ -52,13 +52,11 @@ export function CanvasNodePromptPanel({ node, nodes, isRunning, onPromptChange, 
     const [prompt, setPrompt] = useState(stripCameraPrompt(storedPrompt));
     const [expanded, setExpanded] = useState(false);
 
-    // Restore prompts only when switching nodes; hide the compatibility-layer camera suffix from the editor.
     useEffect(() => {
         setPrompt(stripCameraPrompt(node.metadata?.composerContent ?? node.metadata?.prompt ?? ""));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [node.id]);
 
-    // Generated basket nodes may have the tiger camera block embedded in the saved prompt. Recover it once into metadata.
     useEffect(() => {
         if ((mode !== "image" && mode !== "video") || node.metadata?.cameraControl) return;
         const inferred = parseCameraControlFromPrompt(node.metadata?.prompt ?? "");
@@ -72,7 +70,6 @@ export function CanvasNodePromptPanel({ node, nodes, isRunning, onPromptChange, 
     };
 
     const updateCameraControl = (cameraControl: CameraControlOptions) => {
-        // Keep basket retry metadata aligned with tiger's current camera settings while the editor continues to show only the user's prompt.
         const rawPrompt = stripCameraPrompt(node.metadata?.composerContent ?? node.metadata?.prompt ?? prompt);
         onConfigChange(node.id, { cameraControl, prompt: applyCameraPrompt(rawPrompt, cameraControl) });
     };
@@ -86,6 +83,8 @@ export function CanvasNodePromptPanel({ node, nodes, isRunning, onPromptChange, 
     const openExpandedEditor = () => {
         setExpanded(true);
     };
+
+    const compactButtonHeight = "!h-[35px]";
 
     return (
         <div
@@ -107,7 +106,7 @@ export function CanvasNodePromptPanel({ node, nodes, isRunning, onPromptChange, 
                 placeholder={t(`canvas.promptPanel.${mode === "image" && hasImageContent ? "editImage" : mode === "text" && hasTextContent ? "editText" : mode}`)}
             />
 
-            <div className="mt-2 grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-end gap-2">
+            <div className="mt-2 grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
                 <div className="flex shrink-0 items-center gap-2">
                     <Tooltip title={t("canvas.promptPanel.expandEditor")}>
                         <Button type="text" className="!h-8 !w-8 !min-w-8 shrink-0 !rounded-full !bg-transparent !p-0" style={{ color: theme.node.text }} icon={<Maximize2 className="size-3.5" />} onClick={openExpandedEditor} aria-label={t("canvas.promptPanel.expandEditor")} />
@@ -115,58 +114,58 @@ export function CanvasNodePromptPanel({ node, nodes, isRunning, onPromptChange, 
                     <CanvasPromptLibrary onSelect={updatePrompt} />
                 </div>
 
-                <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 overflow-hidden">
+                <div className="flex min-w-0 flex-wrap items-center justify-start gap-2 overflow-hidden">
                     {mode === "image" ? (
                         <>
-                            <ModelPicker config={config} value={config.model} onChange={(model) => onConfigChange(node.id, { model })} capability="image" onMissingConfig={() => openConfigDialog(true)} className="!min-w-[96px] flex-[1_1_140px] max-w-[190px]" />
+                            <ModelPicker config={config} value={config.model} onChange={(model) => onConfigChange(node.id, { model })} capability="image" onMissingConfig={() => openConfigDialog(true)} className={`${compactButtonHeight} !min-w-[96px] flex-[1_1_140px] max-w-[190px]`} />
                             <div className="min-w-[112px] flex-[1_1_140px] max-w-[170px] [&>span]:w-full">
                                 <CanvasImageSettingsPopover
                                     config={config}
                                     placement="topLeft"
-                                    buttonClassName="!h-10 !w-full !min-w-0 !max-w-none !justify-start !rounded-full !px-3"
+                                    buttonClassName={`${compactButtonHeight} !w-full !min-w-0 !max-w-none !justify-start !rounded-full !px-3`}
                                     onConfigChange={(key, value) => onConfigChange(node.id, key === "count" ? { count: Number(value) || 1 } : { [key]: value })}
                                     onMissingConfig={() => openConfigDialog(true)}
                                     onOpenChange={onImageSettingsOpenChange}
                                 />
                             </div>
                             <div className="shrink-0">
-                                <CanvasCameraControl value={recoveredCameraControl} onChange={updateCameraControl} buttonClassName="!h-10 !min-w-[92px] !justify-start !rounded-full !px-3" />
+                                <CanvasCameraControl value={recoveredCameraControl} onChange={updateCameraControl} buttonClassName={`${compactButtonHeight} !min-w-[92px] !justify-start !rounded-full !px-3`} />
                             </div>
                         </>
                     ) : mode === "video" ? (
                         <>
-                            <ModelPicker config={config} value={config.model} onChange={(model) => onConfigChange(node.id, { model })} capability="video" onMissingConfig={() => openConfigDialog(true)} className="!min-w-[96px] flex-[1_1_140px] max-w-[190px]" />
+                            <ModelPicker config={config} value={config.model} onChange={(model) => onConfigChange(node.id, { model })} capability="video" onMissingConfig={() => openConfigDialog(true)} className={`${compactButtonHeight} !min-w-[96px] flex-[1_1_140px] max-w-[190px]`} />
                             <div className="min-w-[120px] flex-[1_1_160px] max-w-[220px] [&>span]:w-full">
-                                <CanvasVideoSettingsPopover config={config} buttonClassName="!h-10 !w-full !min-w-0 !max-w-none !justify-start !rounded-full !px-3" onConfigChange={(key, value) => onConfigChange(node.id, videoConfigPatch(key, value))} />
+                                <CanvasVideoSettingsPopover config={config} buttonClassName={`${compactButtonHeight} !w-full !min-w-0 !max-w-none !justify-start !rounded-full !px-3`} onConfigChange={(key, value) => onConfigChange(node.id, videoConfigPatch(key, value))} />
                             </div>
                             <div className="shrink-0">
-                                <CanvasCameraControl value={recoveredCameraControl} onChange={updateCameraControl} buttonClassName="!h-10 !min-w-[92px] !justify-start !rounded-full !px-3" />
+                                <CanvasCameraControl value={recoveredCameraControl} onChange={updateCameraControl} buttonClassName={`${compactButtonHeight} !min-w-[92px] !justify-start !rounded-full !px-3`} />
                             </div>
                         </>
                     ) : mode === "audio" ? (
                         <>
-                            <ModelPicker config={config} value={config.model} onChange={(model) => onConfigChange(node.id, { model })} capability="audio" onMissingConfig={() => openConfigDialog(true)} className="!min-w-[96px] flex-[1_1_140px] max-w-[190px]" />
+                            <ModelPicker config={config} value={config.model} onChange={(model) => onConfigChange(node.id, { model })} capability="audio" onMissingConfig={() => openConfigDialog(true)} className={`${compactButtonHeight} !min-w-[96px] flex-[1_1_140px] max-w-[190px]`} />
                             <div className="min-w-[112px] flex-[1_1_140px] max-w-[170px] [&>span]:w-full">
-                                <CanvasAudioSettingsPopover config={config} buttonClassName="!h-10 !w-full !min-w-0 !max-w-none !justify-start !rounded-full !px-3" onConfigChange={(key, value) => onConfigChange(node.id, audioConfigPatch(key, value))} />
+                                <CanvasAudioSettingsPopover config={config} buttonClassName={`${compactButtonHeight} !w-full !min-w-0 !max-w-none !justify-start !rounded-full !px-3`} onConfigChange={(key, value) => onConfigChange(node.id, audioConfigPatch(key, value))} />
                             </div>
                         </>
                     ) : (
                         <>
-                            <ModelPicker config={config} value={config.model} onChange={(model) => onConfigChange(node.id, { model })} capability="text" onMissingConfig={() => openConfigDialog(true)} className="!min-w-[96px] flex-[1_1_140px] max-w-[190px]" />
-                            <CanvasTextSettingsPopover config={config} count={node.metadata?.textCount || 1} onConfigChange={(_, value) => onConfigChange(node.id, { reasoningEffort: value })} onCountChange={(textCount) => onConfigChange(node.id, { textCount })} />
+                            <ModelPicker config={config} value={config.model} onChange={(model) => onConfigChange(node.id, { model })} capability="text" onMissingConfig={() => openConfigDialog(true)} className={`${compactButtonHeight} !min-w-[96px] flex-[1_1_140px] max-w-[190px]`} />
+                            <CanvasTextSettingsPopover config={config} count={node.metadata?.textCount || 1} buttonClassName={`${compactButtonHeight} !max-w-[170px] !justify-start !rounded-full !px-2.5`} onConfigChange={(_, value) => onConfigChange(node.id, { reasoningEffort: value })} onCountChange={(textCount) => onConfigChange(node.id, { textCount })} />
                         </>
                     )}
                 </div>
 
                 <Button
                     type="primary"
-                    className="!h-10 !min-w-16 shrink-0 !rounded-full !px-3"
+                    className={`${compactButtonHeight} !min-w-16 shrink-0 !rounded-full !px-3`}
                     danger={isRunning}
                     disabled={!isRunning && !prompt.trim()}
                     onClick={() => (isRunning ? onStop(node.id) : submit())}
                     aria-label={t(isRunning ? "canvas.promptPanel.stopGeneration" : "canvas.promptPanel.generate")}
                 >
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center justify-center gap-1.5">
                         {isRunning ? (
                             <>
                                 <LoaderCircle className="size-4 animate-spin" />
@@ -174,7 +173,7 @@ export function CanvasNodePromptPanel({ node, nodes, isRunning, onPromptChange, 
                                 <span className="text-xs font-medium">{t("canvas.promptPanel.stop")}</span>
                             </>
                         ) : (
-                            <ArrowUp className="size-4" />
+                            <span className="text-[20px] font-black leading-none">○</span>
                         )}
                     </span>
                 </Button>
