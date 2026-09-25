@@ -36,6 +36,20 @@
     line-height: 20px;
 }
 
+/* Reference-content footer controls share the same 40px button height.
+ * Settings, camera and generate already use h-10; normalize the model trigger here. */
+.node-element [data-canvas-no-zoom].rounded-2xl.border.p-3.shadow-2xl.backdrop-blur .canvas-composer-model-picker {
+    height: 40px !important;
+    min-height: 40px !important;
+}
+
+/* The bottom canvas toolbar is a direct child of the flexible canvas section.
+ * Center it inside the visible canvas share instead of using the historical 300px left offset. */
+section.relative.min-w-0.flex-1.overflow-hidden > .pointer-events-none.absolute.bottom-5.z-50.flex.justify-center {
+    left: 16px !important;
+    right: 16px !important;
+}
+
 /* Image/video/text/audio settings are fixed 356px portals. Keep the approved
  * 15 / 13 / 12 hierarchy without changing their original layout. */
 body > div[style*="position: fixed"][style*="width: 356px"] .text-lg,
@@ -77,6 +91,16 @@ body > div[style*="position: fixed"][style*="width: 356px"] .text-xs,
 @keyframes ratio-slot-in {
     0% { transform: translateY(-112%); opacity: 0.18; }
     100% { transform: translateY(0); opacity: 1; }
+}
+
+/* The three fixed ratio slots are paint-containment boundaries. This guarantees
+ * the rolling content never appears outside the rounded frame, even mid-animation. */
+.canvas-image-settings-popover button.relative.h-\[72px\].overflow-hidden.rounded-xl,
+body > div[style*="position: fixed"][style*="width: 356px"] button.relative.h-\[72px\].overflow-hidden.rounded-xl {
+    overflow: hidden !important;
+    clip-path: inset(0 round 12px);
+    contain: paint;
+    isolation: isolate;
 }
 
 /* Camera is portaled to document.body, so scope it by its unique fixed 900px tiger panel. */
