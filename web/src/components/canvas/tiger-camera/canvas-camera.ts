@@ -250,8 +250,30 @@ export function describeAperture(f: number): string {
   return `shot at f/${f}, very wide depth of field, extensive sharpness from foreground to background, wide-open environmental feel`;
 }
 
+const CAMERA_PROMPT_MARKER = 'the following parameters describe the virtual camera, lens, and exposure used to render this image';
+const CAMERA_META_RE = /\[camera body: (.+?) · lens: (.+?) · focal: ([\d.]+)mm · aperture: f\/([\d.]+)\]/;
+
+export function stripCameraPrompt(prompt: string): string {
+  const markerIndex = prompt.indexOf(CAMERA_PROMPT_MARKER);
+  if (markerIndex < 0) return prompt;
+  return prompt.slice(0, markerIndex).replace(/[,，\s]+$/, '').trim();
+}
+
+export function parseCameraControlFromPrompt(prompt: string): CameraControlOptions | undefined {
+  const match = prompt.match(CAMERA_META_RE);
+  if (!match) return undefined;
+  const camera = CAMERA_PROFILES.find((item) => item.shortTag === match[1]);
+  const lens = LENS_PROFILES.find((item) => item.shortTag === match[2]);
+  const focalLength = Number(match[3]);
+  const aperture = Number(match[4]);
+  if (!camera || !lens || !Number.isFinite(focalLength) || !Number.isFinite(aperture)) return undefined;
+  return { enabled: true, camera: camera.id, lens: lens.id, focalLength, aperture };
+}
+
 export function applyCameraPrompt(prompt: string, control?: CameraControlOptions): string {
-  if (!control?.enabled) return prompt;
+  if (!control) return prompt;
+  const basePrompt = stripCameraPrompt(prompt);
+  if (!control.enabled) return basePrompt;
   const camera = CAMERA_PROFILES.find((item) => item.id === control.camera) ?? CAMERA_PROFILES[0];
   const lens = LENS_PROFILES.find((item) => item.id === control.lens) ?? LENS_PROFILES[0];
   const cameraPrompt = [
@@ -263,5 +285,5 @@ export function applyCameraPrompt(prompt: string, control?: CameraControlOptions
     'keep the subjects, scene, and action unchanged — apply these as optical and sensor characteristics only',
     '[camera body: ' + camera.shortTag + ' · lens: ' + lens.shortTag + ' · focal: ' + control.focalLength + 'mm · aperture: f/' + control.aperture + ']',
   ].join(', ');
-  return prompt ? prompt + ', ' + cameraPrompt : cameraPrompt;
+  return basePrompt ? basePrompt + ', ' + cameraPrompt : cameraPrompt;
 }
