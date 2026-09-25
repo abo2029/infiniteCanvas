@@ -7,8 +7,8 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Camera, ChevronDown, ChevronUp, X } from "lucide-react";
-import { Button, Switch, Tooltip } from "antd";
+import { Camera, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Button, Tooltip } from "antd";
 
 import { canvasThemes, type CanvasTheme } from "@/lib/canvas-theme";
 import { useThemeStore } from "@/stores/use-theme-store";
@@ -59,6 +59,7 @@ export function CanvasCameraControl({ value, onChange, buttonClassName }: Canvas
 
         const trigger = buttonRef.current;
         if (!trigger) return;
+        let frame = 0;
 
         const syncPosition = () => {
             const next = trigger.getBoundingClientRect();
@@ -73,6 +74,14 @@ export function CanvasCameraControl({ value, onChange, buttonClassName }: Canvas
             );
         };
 
+        const scheduleSync = () => {
+            if (frame) return;
+            frame = window.requestAnimationFrame(() => {
+                frame = 0;
+                syncPosition();
+            });
+        };
+
         const closeOnOutsidePointer = (event: PointerEvent) => {
             const target = event.target;
             if (!(target instanceof Node) || buttonRef.current?.contains(target) || panelRef.current?.contains(target)) return;
@@ -80,33 +89,42 @@ export function CanvasCameraControl({ value, onChange, buttonClassName }: Canvas
         };
 
         syncPosition();
-        window.addEventListener("resize", syncPosition);
-        window.addEventListener("scroll", syncPosition, true);
+        window.addEventListener("resize", scheduleSync);
+        window.addEventListener("scroll", scheduleSync, true);
+        window.addEventListener("wheel", scheduleSync, true);
         window.addEventListener("pointerdown", closeOnOutsidePointer, true);
 
         return () => {
-            window.removeEventListener("resize", syncPosition);
-            window.removeEventListener("scroll", syncPosition, true);
+            if (frame) window.cancelAnimationFrame(frame);
+            window.removeEventListener("resize", scheduleSync);
+            window.removeEventListener("scroll", scheduleSync, true);
+            window.removeEventListener("wheel", scheduleSync, true);
             window.removeEventListener("pointerdown", closeOnOutsidePointer, true);
         };
     }, [open]);
 
     const panelStyle = buttonRect
-        ? {
-              position: "fixed",
-              zIndex: 1200,
-              width: 900,
-              left: buttonRect.left + buttonRect.width / 2,
-              bottom: window.innerHeight - buttonRect.top + 8,
-              transform: "translateX(-50%) scale(0.75)",
-              transformOrigin: "center bottom",
-              overflowY: "auto",
-              background: theme.toolbar.panel,
-              border: "1px solid " + theme.toolbar.border,
-              borderRadius: 18,
-              boxShadow: "0 18px 54px rgba(28, 25, 23, 0.16)",
-              color: theme.node.text,
-          } as const
+        ? (() => {
+              const margin = 12;
+              const gap = 8;
+              const width = Math.max(320, Math.min(900, window.innerWidth - margin * 2));
+              const desiredLeft = buttonRect.left + buttonRect.width / 2 - width / 2;
+              return {
+                  position: "fixed",
+                  zIndex: 1200,
+                  width,
+                  left: Math.max(margin, Math.min(window.innerWidth - width - margin, desiredLeft)),
+                  bottom: window.innerHeight - buttonRect.top + gap,
+                  maxHeight: Math.max(260, buttonRect.top - margin * 2),
+                  overflowY: "auto",
+                  overscrollBehavior: "contain",
+                  background: theme.toolbar.panel,
+                  border: "1px solid " + theme.toolbar.border,
+                  borderRadius: 18,
+                  boxShadow: "0 20px 64px rgba(0, 0, 0, 0.32)",
+                  color: theme.node.text,
+              } as const;
+          })()
         : undefined;
 
     return (
@@ -131,6 +149,7 @@ export function CanvasCameraControl({ value, onChange, buttonClassName }: Canvas
                 ? createPortal(
                       <div
                           ref={panelRef}
+                          className="canvas-camera-control-popover"
                           style={panelStyle}
                           onPointerDown={(event) => event.stopPropagation()}
                           onMouseDown={(event) => event.stopPropagation()}
@@ -138,9 +157,20 @@ export function CanvasCameraControl({ value, onChange, buttonClassName }: Canvas
                           onWheel={(event) => event.stopPropagation()}
                       >
                           <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: theme.toolbar.border }}>
-                              <h2 className="text-base font-semibold">摄像机</h2>
-                              <button type="button" className="grid size-8 place-items-center rounded-lg transition hover:opacity-70" style={{ color: theme.node.muted }} aria-label="关闭" onClick={() => setOpen(false)}>
-                                  <X className="size-5" />
+                              <h2 className="text-[15px] font-semibold leading-5">摄像机</h2>
+                              <button
+                                  type="button"
+                                  className="grid size-5 shrink-0 place-items-center rounded-full border transition hover:opacity-80"
+                                  style={{
+                                      background: cameraControl.enabled ? theme.node.text : "transparent",
+                                      borderColor: cameraControl.enabled ? theme.node.text : theme.node.stroke,
+                                      color: cameraControl.enabled ? theme.node.panel : "transparent",
+                                  }}
+                                  aria-label={cameraControl.enabled ? "关闭摄像机控制" : "开启摄像机控制"}
+                                  aria-pressed={cameraControl.enabled}
+                                  onClick={() => updateCameraControl({ enabled: !cameraControl.enabled })}
+                              >
+                                  {cameraControl.enabled ? <Check className="size-3.5" strokeWidth={3} /> : null}
                               </button>
                           </div>
 
@@ -207,11 +237,6 @@ export function CanvasCameraControl({ value, onChange, buttonClassName }: Canvas
                                           onNext={cameraControl.aperture === APERTURES[APERTURES.length - 1] ? undefined : () => updateCameraControl({ aperture: cycleValue(APERTURES, cameraControl.aperture, 1) })}
                                       />
                                   </div>
-                              </div>
-
-                              <div className="mt-6 flex items-center justify-end gap-2">
-                                  <span className="text-sm" style={{ color: cameraControl.enabled ? theme.node.text : theme.node.muted }}>{cameraControl.enabled ? "开启" : "关闭"}</span>
-                                  <Switch size="small" checked={cameraControl.enabled} aria-label="摄像机控制" onChange={(enabled) => updateCameraControl({ enabled })} />
                               </div>
                           </div>
                       </div>,
