@@ -9,6 +9,10 @@ permissions:
   contents: read
   actions: write
 
+concurrency:
+  group: real-client-preview-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-web:
     runs-on: ubuntu-latest
@@ -75,6 +79,20 @@ jobs:
           echo Python was not found. Install Python 3 or serve this folder with another static web server.
           pause
           BAT
+
+          cat > dist/START_PREVIEW_MAC.command <<'MAC'
+          #!/bin/zsh
+          cd "$(dirname "$0")"
+          URL="http://127.0.0.1:4173/canvas"
+          if ! command -v python3 >/dev/null 2>&1; then
+            echo "Python 3 was not found. Install Python 3 or serve this folder with another static web server."
+            read "?Press Enter to close..."
+            exit 1
+          fi
+          (sleep 1; open "$URL") &
+          exec python3 "_preview_server.py"
+          MAC
+          chmod +x dist/START_PREVIEW_MAC.command
 
       - name: Delete previous preview artifacts
         env:
