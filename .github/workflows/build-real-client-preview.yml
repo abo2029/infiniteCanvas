@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/tiger-camera-port
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,7 +16,9 @@ concurrency:
 
 jobs:
   build-web:
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - infinitecanvas
     defaults:
       run:
         working-directory: web
@@ -38,77 +41,6 @@ jobs:
 
       - name: Build web client
         run: bun run build
-
-      - name: Add local preview launcher
-        shell: bash
-        run: |
-          cat > dist/_preview_server.py <<'PY'
-          from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
-          from pathlib import Path
-          import os
-
-          ROOT = Path(__file__).resolve().parent
-          os.chdir(ROOT)
-
-          class SPAHandler(SimpleHTTPRequestHandler):
-              def do_GET(self):
-                  path = self.path.split('?', 1)[0].split('#', 1)[0]
-                  target = ROOT / path.lstrip('/')
-                  if path != '/' and not target.exists():
-                      self.path = '/index.html'
-                  return super().do_GET()
-
-          print('Infinite Canvas preview: http://127.0.0.1:4173/canvas')
-          ThreadingHTTPServer(('127.0.0.1', 4173), SPAHandler).serve_forever()
-          PY
-
-          cat > dist/START_PREVIEW_WINDOWS.bat <<'BAT'
-          @echo off
-          cd /d %~dp0
-          start "" http://127.0.0.1:4173/canvas
-          where py >nul 2>nul
-          if %errorlevel%==0 (
-            py _preview_server.py
-            exit /b
-          )
-          where python >nul 2>nul
-          if %errorlevel%==0 (
-            python _preview_server.py
-            exit /b
-          )
-          echo Python was not found. Install Python 3 or serve this folder with another static web server.
-          pause
-          BAT
-
-          cat > dist/START_PREVIEW_MAC.command <<'MAC'
-          #!/bin/zsh
-          cd "$(dirname "$0")"
-          URL="http://127.0.0.1:4173/canvas"
-          if ! command -v python3 >/dev/null 2>&1; then
-            echo "Python 3 was not found. Install Python 3 or serve this folder with another static web server."
-            read "?Press Enter to close..."
-            exit 1
-          fi
-          (sleep 1; open "$URL") &
-          exec python3 "_preview_server.py"
-          MAC
-          chmod +x dist/START_PREVIEW_MAC.command
-
-      - name: Delete previous preview artifacts
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          artifact_ids="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=infiniteCanvas-real-client&per_page=100" --jq '.artifacts[].id')"
-          if [ -z "$artifact_ids" ]; then
-            echo "No previous infiniteCanvas-real-client artifacts to delete."
-            exit 0
-          fi
-
-          while IFS= read -r artifact_id; do
-            [ -z "$artifact_id" ] && continue
-            echo "Deleting old preview artifact ${artifact_id}"
-            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
-          done <<< "$artifact_ids"
 
       - name: Upload real client
         uses: actions/upload-artifact@v4
