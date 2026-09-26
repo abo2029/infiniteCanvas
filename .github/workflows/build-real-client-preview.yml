@@ -82,7 +82,7 @@ jobs:
           import os
           import urllib.request
 
-          repo = os.environ["GH_REPOSITORY]
+          repo = os.environ["GH_REPOSITORY"]
           token = os.environ["GH_TOKEN"]
           name = "infiniteCanvas-chat-test"
 
