@@ -74,10 +74,6 @@ jobs:
           }
           EOF
 
-          rm -f "infiniteCanvas-${VERSION}-test.zip"
-          cd package
-          zip -r "../infiniteCanvas-${VERSION}-test.zip" .
-
       - name: Delete previous alpha artifacts
         env:
           GH_TOKEN: ${{ github.token }}
@@ -86,44 +82,20 @@ jobs:
           (async () => {
             const repo = process.env.GITHUB_REPOSITORY;
             const token = process.env.GH_TOKEN;
-            const headers = {
-              Authorization: `Bearer ${token}`,
-              Accept: 'application/vnd.github+json',
-              'X-GitHub-Api-Version': '2022-11-28'
-            };
-
-            let page = 1;
-            while (true) {
-              const list = await fetch(`https://api.github.com/repos/${repo}/actions/artifacts?per_page=100&page=${page}`, { headers });
-              if (!list.ok) throw new Error(`List artifacts failed: ${list.status}`);
-              const data = await list.json();
-              const artifacts = data.artifacts || [];
-
-              for (const artifact of artifacts) {
-                if (/^infiniteCanvas-v.*-alpha-test$/.test(artifact.name)) {
-                  const del = await fetch(`https://api.github.com/repos/${repo}/actions/artifacts/${artifact.id}`, {
-                    method: 'DELETE',
-                    headers
-                  });
-                  if (!(del.ok || del.status === 404)) {
-                    throw new Error(`Delete artifact ${artifact.id} failed: ${del.status}`);
-                  }
-                  console.log(`Deleted old artifact: ${artifact.name} (${artifact.id})`);
-                }
+            const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' };
+            const list = await fetch(`https://api.github.com/repos/${repo}/actions/artifacts?per_page=100`, { headers });
+            const data = await list.json();
+            for (const artifact of data.artifacts || []) {
+              if (/^infiniteCanvas-v.*-alpha-test$/.test(artifact.name)) {
+                await fetch(`https://api.github.com/repos/${repo}/actions/artifacts/${artifact.id}`, { method: 'DELETE', headers });
               }
-
-              if (artifacts.length < 100) break;
-              page += 1;
             }
-          })().catch(err => {
-            console.error(err);
-            process.exit(1);
-          });
+          })();
           NODE
 
       - uses: actions/upload-artifact@v4
         with:
           name: infiniteCanvas-${{ steps.version.outputs.version }}-test
-          path: infiniteCanvas-${{ steps.version.outputs.version }}-test.zip
+          path: package
           if-no-files-found: error
           retention-days: 7
