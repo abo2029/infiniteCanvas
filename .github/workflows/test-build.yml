@@ -1,8 +1,5 @@
 name: Test Build Alpha
 
-# Trigger alpha package build
-# Node runtime fixed for Vite compatibility
-
 on:
   push:
     branches:
@@ -18,6 +15,7 @@ jobs:
     runs-on:
       - self-hosted
       - infinitecanvas
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +24,15 @@ jobs:
           node-version: 22
 
       - uses: oven-sh/setup-bun@v2
+
+      - name: Read alpha version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(tr -d '\r\n' < VERSION)"
+          test -n "$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building $VERSION"
 
       - name: Install dependencies
         working-directory: web
@@ -36,19 +43,87 @@ jobs:
         run: bun run build
 
       - name: Package alpha test build
+        shell: bash
         run: |
-          VERSION=v0.1.0-alpha
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+
+          test -f START_PREVIEW_MAC.command
+          test -f START_PREVIEW_WINDOWS.bat
+          test -f _preview_server.py
+          test -f README_TEST.md
+          test -f web/dist/index.html
+
+          rm -rf package
           mkdir -p package
-          cp -r web/dist package/
-          cp START_PREVIEW_MAC.command START_PREVIEW_WINDOWS.bat package/ 2>/dev/null || true
+          cp -r web/dist package/dist
+          cp START_PREVIEW_MAC.command package/
+          cp START_PREVIEW_WINDOWS.bat package/
+          cp _preview_server.py package/
+          cp README_TEST.md package/
+          cp CHANGELOG.md package/
+          chmod +x package/START_PREVIEW_MAC.command
+
           cat > package/BUILD_INFO.json <<EOF
-          {"version":"${VERSION}","channel":"alpha","platform":["macOS","Windows11"],"commit":"${GITHUB_SHA}"}
+          {
+            "version": "${VERSION}",
+            "channel": "alpha",
+            "platform": ["macOS", "Windows11"],
+            "commit": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}"
+          }
           EOF
+
+          rm -f "infiniteCanvas-${VERSION}-test.zip"
           cd package
-          zip -r ../infiniteCanvas-${VERSION}-test.zip .
+          zip -r "../infiniteCanvas-${VERSION}-test.zip" .
+
+      - name: Delete previous alpha artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node <<'NODE'
+          (async () => {
+            const repo = process.env.GITHUB_REPOSITORY;
+            const token = process.env.GH_TOKEN;
+            const headers = {
+              Authorization: `Bearer ${token}`,
+              Accept: 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28'
+            };
+
+            let page = 1;
+            while (true) {
+              const list = await fetch(`https://api.github.com/repos/${repo}/actions/artifacts?per_page=100&page=${page}`, { headers });
+              if (!list.ok) throw new Error(`List artifacts failed: ${list.status}`);
+              const data = await list.json();
+              const artifacts = data.artifacts || [];
+
+              for (const artifact of artifacts) {
+                if (/^infiniteCanvas-v.*-alpha-test$/.test(artifact.name)) {
+                  const del = await fetch(`https://api.github.com/repos/${repo}/actions/artifacts/${artifact.id}`, {
+                    method: 'DELETE',
+                    headers
+                  });
+                  if (!(del.ok || del.status === 404)) {
+                    throw new Error(`Delete artifact ${artifact.id} failed: ${del.status}`);
+                  }
+                  console.log(`Deleted old artifact: ${artifact.name} (${artifact.id})`);
+                }
+              }
+
+              if (artifacts.length < 100) break;
+              page += 1;
+            }
+          })().catch(err => {
+            console.error(err);
+            process.exit(1);
+          });
+          NODE
 
       - uses: actions/upload-artifact@v4
         with:
-          name: infiniteCanvas-v0.1.0-alpha-test
-          path: infiniteCanvas-v0.1.0-alpha-test.zip
+          name: infiniteCanvas-${{ steps.version.outputs.version }}-test
+          path: infiniteCanvas-${{ steps.version.outputs.version }}-test.zip
+          if-no-files-found: error
           retention-days: 7
