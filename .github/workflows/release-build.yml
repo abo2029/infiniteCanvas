@@ -1,0 +1,45 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on:
+      - self-hosted
+      - infinitecanvas
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        working-directory: web
+        run: bun install
+
+      - name: Build release client
+        working-directory: web
+        run: bun run build
+
+      - name: Package release
+        run: |
+          VERSION=${GITHUB_REF_NAME}
+          mkdir -p package
+          cp -r web/dist package/
+          cp START_PREVIEW_MAC.command START_PREVIEW_WINDOWS.bat package/ 2>/dev/null || true
+          cat > package/BUILD_INFO.json <<EOF
+          {"version":"${VERSION}","channel":"release","commit":"${GITHUB_SHA}"}
+          EOF
+          cd package
+          zip -r ../infiniteCanvas-${VERSION}.zip .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: infiniteCanvas-${{ github.ref_name }}
+          path: infiniteCanvas-${{ github.ref_name }}.zip
