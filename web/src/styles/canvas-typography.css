@@ -1,0 +1,215 @@
+/* Canvas-only typography normalization approved in the UI review.
+ * Keep this file intentionally narrow: it should not redesign unrelated app UI.
+ */
+:root {
+    --canvas-fs-caption: 11px;
+    --canvas-fs-label: 12px;
+    --canvas-fs-control: 13px;
+    --canvas-fs-body: 14px;
+    --canvas-fs-title: 15px;
+    --canvas-fs-heading: 16px;
+}
+
+/* Node title shown above selected / hovered nodes. */
+.node-element > .absolute.left-3.top-\[-28px\] input,
+.node-element > .absolute.left-3.top-\[-28px\] button {
+    font-size: var(--canvas-fs-title) !important;
+    line-height: 20px !important;
+}
+
+/* Controls inside canvas nodes / prompt panels use the shared 13px control size. */
+.node-element .ant-btn,
+.node-element .canvas-compact-control,
+.node-element .canvas-composer-model-picker {
+    font-size: var(--canvas-fs-control) !important;
+    line-height: 18px;
+}
+
+.canvas-config-mode {
+    font-size: var(--canvas-fs-label);
+}
+
+/* Config-node settings triggers are Ant text buttons, so explicitly restore the
+ * same visible control border used by the neighboring model control. */
+.node-element .canvas-compact-control.ant-btn {
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: color-mix(in srgb, currentColor 26%, transparent) !important;
+}
+
+/* Prompt body remains the 14px reading baseline. */
+.node-element [data-canvas-no-zoom] textarea,
+.node-element [data-canvas-no-zoom] [contenteditable="true"] {
+    font-size: var(--canvas-fs-body);
+    line-height: 20px;
+}
+
+/* Reference-content footer controls share the reviewed 35px button height. */
+.node-element [data-canvas-no-zoom].rounded-2xl.border.p-3.shadow-2xl.backdrop-blur .canvas-composer-model-picker {
+    height: 35px !important;
+    min-height: 35px !important;
+}
+
+/* Reference card controls share one visual family: model keeps its border;
+ * settings are borderless; camera is borderless until enabled. */
+.node-element .canvas-reference-settings-trigger {
+    border: 1px solid transparent !important;
+}
+
+.node-element .canvas-reference-camera-trigger {
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: transparent !important;
+    background: #e7e5df !important;
+}
+
+.dark .node-element .canvas-reference-camera-trigger {
+    background: #292524 !important;
+}
+
+.node-element .canvas-reference-camera-trigger-active {
+    border-color: #1c1917 !important;
+}
+
+.dark .node-element .canvas-reference-camera-trigger-active {
+    border-color: #fafaf9 !important;
+}
+
+/* The bottom canvas toolbar is a direct child of the flexible canvas section.
+ * Center it inside the visible canvas share instead of using the historical 300px left offset. */
+section.relative.min-w-0.flex-1.overflow-hidden > .pointer-events-none.absolute.bottom-5.z-50.flex.justify-center {
+    left: 16px !important;
+    right: 16px !important;
+}
+
+/* Image/video/text/audio settings are fixed 356px portals. Keep the approved
+ * 15 / 13 / 12 hierarchy without changing their original layout. */
+body > div[style*="position: fixed"][style*="width: 356px"] .text-lg,
+.canvas-image-settings-popover .text-lg {
+    font-size: var(--canvas-fs-title) !important;
+    line-height: 20px !important;
+}
+
+body > div[style*="position: fixed"][style*="width: 356px"] .text-sm,
+.canvas-image-settings-popover .text-sm {
+    font-size: var(--canvas-fs-control) !important;
+    line-height: 18px !important;
+}
+
+body > div[style*="position: fixed"][style*="width: 356px"] .text-sm.font-medium,
+.canvas-image-settings-popover .text-sm.font-medium {
+    font-size: var(--canvas-fs-label) !important;
+    line-height: 16px !important;
+}
+
+body > div[style*="position: fixed"][style*="width: 356px"] textarea.text-sm,
+.canvas-image-settings-popover textarea.text-sm {
+    font-size: var(--canvas-fs-body) !important;
+    line-height: 20px !important;
+}
+
+body > div[style*="position: fixed"][style*="width: 356px"] .text-xs,
+.canvas-image-settings-popover .text-xs {
+    font-size: var(--canvas-fs-label) !important;
+    line-height: 16px !important;
+}
+
+/* Fixed ratio slots keep their frame still; only the inner content rolls. */
+@keyframes ratio-slot-out {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(112%); opacity: 0; }
+}
+
+@keyframes ratio-slot-in {
+    0% { transform: translateY(-112%); opacity: 0.18; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+/* The three fixed ratio slots are paint-containment boundaries. This guarantees
+ * the rolling content never appears outside the rounded frame, even mid-animation. */
+.canvas-image-settings-popover button.relative.h-\[72px\].overflow-hidden.rounded-xl,
+body > div[style*="position: fixed"][style*="width: 356px"] button.relative.h-\[72px\].overflow-hidden.rounded-xl {
+    overflow: hidden !important;
+    clip-path: inset(0 round 12px);
+    contain: paint;
+    isolation: isolate;
+}
+
+/* Camera is now a first-class canvas child popover. Keep its typography scoped
+ * to the camera panel so the 356px settings portals retain their own hierarchy. */
+.canvas-camera-control-popover .text-base {
+    font-size: var(--canvas-fs-title) !important;
+    line-height: 20px !important;
+}
+
+.canvas-camera-control-popover .text-sm {
+    font-size: var(--canvas-fs-label) !important;
+    line-height: 16px !important;
+}
+
+.canvas-camera-control-popover .text-xs {
+    font-size: var(--canvas-fs-caption) !important;
+    line-height: 15px !important;
+}
+
+/* Reviewed popup behavior: child popups close by trigger/outside click, not an X button. */
+.node-element [data-canvas-no-zoom].rounded-2xl.border.p-3.shadow-2xl.backdrop-blur > .mb-2 > .ant-btn {
+    display: none !important;
+}
+
+/* Model choices use the reviewed left-aligned radio/check treatment and size to
+ * the longest item instead of forcing a fixed 320px dropdown. */
+.canvas-model-picker-content {
+    width: max-content !important;
+    min-width: var(--radix-select-trigger-width) !important;
+    max-width: calc(100vw - 24px) !important;
+}
+
+.canvas-model-picker-content [data-slot="select-item"],
+.canvas-model-picker-content [data-slot="select-item"] > span:last-child {
+    text-align: left;
+}
+
+.canvas-model-picker-content [data-slot="select-item"] > span:last-child {
+    width: max-content;
+    min-width: 100%;
+    justify-content: flex-start;
+}
+
+.canvas-model-picker-content [data-slot="select-item"] > span:last-child span:last-child {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+}
+
+/* Model trigger uses the same base fill as settings/camera while keeping its border. */
+.node-element .canvas-composer-model-picker {
+    background: #e7e5df !important;
+    border-color: #d6d3ca !important;
+}
+
+.dark .node-element .canvas-composer-model-picker {
+    background: #292524 !important;
+    border-color: #44403c !important;
+}
+
+/* Node hover toolbars must follow the active canvas theme. The original component
+ * is hard-coded white, so dark mode overrides it here without affecting light mode. */
+.dark div[class*="z-[70]"][class*="bg-white"][class*="text-[#242529]"] {
+    background: rgba(31, 29, 26, .96) !important;
+    border-color: #44403c !important;
+    color: #f5f5f4 !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .32) !important;
+}
+
+.dark div[class*="z-[70]"][class*="bg-white"][class*="text-[#242529]"] button:not([class*="text-[#ef4444]"]) {
+    color: #f5f5f4 !important;
+}
+
+.dark div[class*="z-[70]"][class*="bg-white"][class*="text-[#242529]"] button:hover > span {
+    background: #292524 !important;
+}
+
+.dark div[class*="z-[70]"][class*="bg-white"][class*="text-[#242529]"] button > span[class*="bg-[#eeeeef]"] {
+    background: #3a3631 !important;
+}

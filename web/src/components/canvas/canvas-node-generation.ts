@@ -6,6 +6,7 @@ import type { ReferenceAudio, ReferenceVideo } from "@/types/media";
 import { CanvasNodeType, type CanvasConnection, type CanvasNodeData } from "@/types/canvas";
 import { getGenerationResourceNodes, getGroupResourceNodes } from "@/lib/canvas/canvas-resource-references";
 import { getNodeDefinition } from "@/lib/canvas/node-registry";
+import { applyCameraPrompt } from "./tiger-camera/canvas-camera";
 
 export type NodeGenerationContext = {
     prompt: string;
@@ -44,6 +45,10 @@ export function buildNodeGenerationContext(nodeId: string, nodes: CanvasNodeData
         return buildComposerGenerationContext(inputs, prompt);
     }
 
+    const effectivePrompt = sourceNode && (sourceNode.type === CanvasNodeType.Image || sourceNode.type === CanvasNodeType.Video)
+        ? applyCameraPrompt(prompt, sourceNode.metadata?.cameraControl)
+        : prompt;
+
     const resourceInputs = flattenGenerationInputs(inputs);
     let textIndex = 0;
     const upstreamText = resourceInputs.flatMap((input) => (input.text ? [textBlock(generationLabel("text", textIndex++), input.text)] : [])).join("\n\n");
@@ -52,7 +57,7 @@ export function buildNodeGenerationContext(nodeId: string, nodes: CanvasNodeData
     const referenceAudios = resourceInputs.map((input) => input.audio).filter((audio): audio is ReferenceAudio => Boolean(audio));
 
     return {
-        prompt: upstreamText ? `${prompt}\n\n${upstreamText}` : prompt,
+        prompt: upstreamText ? `${effectivePrompt}\n\n${upstreamText}` : effectivePrompt,
         referenceImages,
         referenceVideos,
         referenceAudios,

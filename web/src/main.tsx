@@ -3,14 +3,18 @@ import { createRoot } from "react-dom/client";
 import "antd/dist/reset.css";
 import "streamdown/styles.css";
 import "./styles/globals.css";
+import "./styles/canvas-typography.css";
+import "./styles/canvas-reviewed-controls.css";
 import { RouterProvider } from "react-router-dom";
 
 import { AppProviders } from "@/components/layout/app-providers";
 import "@/i18n";
 import { initAnalytics } from "@/lib/analytics";
+import { installCanvasPopoverWheelLock } from "@/lib/canvas-popover-wheel-lock";
 import { router } from "@/router";
 
 initAnalytics();
+installCanvasPopoverWheelLock();
 
 document.body.style.fontFamily = '"SF Pro Display","SF Pro Text","PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif';
 

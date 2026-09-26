@@ -193,7 +193,6 @@ export function InfiniteCanvas({ containerRef, viewport, tool, backgroundMode = 
         const container = containerRef.current;
         if (!container) return;
 
-        // Prevent canvas scrolling from moving the page while preserving native scrolling inside overlays and dialogs.
         const preventWheelScroll = (event: WheelEvent) => {
             const target = event.target instanceof Element ? event.target : null;
             if (target?.closest("[data-canvas-no-zoom],.ant-modal,.ant-popover,.ant-dropdown,.ant-select-dropdown,.ant-picker-dropdown")) return;
@@ -203,9 +202,66 @@ export function InfiniteCanvas({ containerRef, viewport, tool, backgroundMode = 
         return () => container.removeEventListener("wheel", preventWheelScroll);
     }, [containerRef]);
 
+    useEffect(() => {
+        const handleResetView = (event: Event) => {
+            const container = containerRef.current;
+            if (!container) return;
+
+            const rect = container.getBoundingClientRect();
+            const nodeElements = Array.from(container.querySelectorAll<HTMLElement>(".node-element[data-node-id]"));
+            event.preventDefault();
+
+            if (!nodeElements.length) {
+                onViewportChange({ x: rect.width / 2, y: rect.height / 2, k: 1 });
+                return;
+            }
+
+            const safeScale = Math.max(0.0001, viewport.k);
+            const worldRects = nodeElements.map((element) => {
+                const nodeRect = element.getBoundingClientRect();
+                return {
+                    left: (nodeRect.left - rect.left - viewport.x) / safeScale,
+                    top: (nodeRect.top - rect.top - viewport.y) / safeScale,
+                    right: (nodeRect.right - rect.left - viewport.x) / safeScale,
+                    bottom: (nodeRect.bottom - rect.top - viewport.y) / safeScale,
+                };
+            });
+            const left = Math.min(...worldRects.map((item) => item.left));
+            const top = Math.min(...worldRects.map((item) => item.top));
+            const right = Math.max(...worldRects.map((item) => item.right));
+            const bottom = Math.max(...worldRects.map((item) => item.bottom));
+            const centerX = (left + right) / 2;
+            const centerY = (top + bottom) / 2;
+
+            if (nodeElements.length === 1) {
+                onViewportChange({ x: rect.width / 2 - centerX, y: rect.height / 2 - centerY, k: 1 });
+                return;
+            }
+
+            const padding = 72;
+            const boundsWidth = Math.max(1, right - left);
+            const boundsHeight = Math.max(1, bottom - top);
+            const availableWidth = Math.max(1, rect.width - padding * 2);
+            const availableHeight = Math.max(1, rect.height - padding * 2);
+            const fitScale = Math.min(1, Math.max(0.05, Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight)));
+
+            onViewportChange({
+                x: rect.width / 2 - centerX * fitScale,
+                y: rect.height / 2 - centerY * fitScale,
+                k: fitScale,
+            });
+        };
+
+        window.addEventListener("infinite-canvas-reset-view", handleResetView);
+        return () => window.removeEventListener("infinite-canvas-reset-view", handleResetView);
+    }, [containerRef, onViewportChange, viewport.k, viewport.x, viewport.y]);
+
     const temporaryTool = isControlPressed || isSpacePressed;
     const activeTool = temporaryTool ? (tool === "select" ? "pan" : "select") : tool;
     const cursor = isPanning ? "grabbing" : activeTool === "pan" ? "grab" : undefined;
+    const canvasChildren = React.Children.toArray(children);
+    const screenOverlayChildren = canvasChildren.filter(isReferenceSelectionScreenOverlay);
+    const worldChildren = canvasChildren.filter((child) => !isReferenceSelectionScreenOverlay(child));
 
     return (
         <div
@@ -226,10 +282,21 @@ export function InfiniteCanvas({ containerRef, viewport, tool, backgroundMode = 
                     transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.k})`,
                 }}
             >
-                {children}
+                {worldChildren}
             </div>
+            {screenOverlayChildren.map((child) =>
+                React.isValidElement<{ className?: string }>(child)
+                    ? React.cloneElement(child, { className: `${child.props.className || ""} whitespace-nowrap` })
+                    : child,
+            )}
         </div>
     );
+}
+
+function isReferenceSelectionScreenOverlay(child: React.ReactNode) {
+    if (!React.isValidElement<{ className?: string }>(child) || child.type !== "button") return false;
+    const className = child.props.className;
+    return typeof className === "string" && className.includes("left-1/2") && className.includes("top-4") && className.includes("z-[90]");
 }
 
 function CanvasGrid({ viewport, mode }: { viewport: ViewportTransform; mode: CanvasBackgroundMode }) {

@@ -1,0 +1,21 @@
+name: Auto preview build notification
+
+on:
+  pull_request:
+    branches:
+      - feat/tiger-camera-port
+  push:
+    branches:
+      - feat/tiger-camera-port
+
+permissions:
+  contents: read
+
+jobs:
+  preview-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Preview build triggered
+        run: |
+          echo "feat/tiger-camera-port update detected"
+          echo "The real client preview workflow should build the artifact automatically."

@@ -15,7 +15,7 @@ type CanvasVideoSettingsPopoverProps = {
     placement?: "topLeft" | "top" | "topRight" | "bottomLeft" | "bottom" | "bottomRight";
 };
 
-export function CanvasVideoSettingsPopover({ config, onConfigChange, buttonClassName, placement = "topLeft" }: CanvasVideoSettingsPopoverProps) {
+export function CanvasVideoSettingsPopover({ config, onConfigChange, buttonClassName, placement = "top" }: CanvasVideoSettingsPopoverProps) {
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
     const buttonRef = useRef<HTMLSpanElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
@@ -24,7 +24,15 @@ export function CanvasVideoSettingsPopover({ config, onConfigChange, buttonClass
 
     useEffect(() => {
         if (!open) return;
+        let frame = 0;
         const syncPosition = () => setButtonRect(buttonRef.current?.getBoundingClientRect() || null);
+        const scheduleSync = () => {
+            if (frame) return;
+            frame = window.requestAnimationFrame(() => {
+                frame = 0;
+                syncPosition();
+            });
+        };
         const closeOnOutsidePointer = (event: PointerEvent) => {
             const target = event.target;
             if (!(target instanceof Node)) return;
@@ -33,12 +41,15 @@ export function CanvasVideoSettingsPopover({ config, onConfigChange, buttonClass
         };
 
         syncPosition();
-        window.addEventListener("resize", syncPosition);
-        window.addEventListener("scroll", syncPosition, true);
+        window.addEventListener("resize", scheduleSync);
+        window.addEventListener("scroll", scheduleSync, true);
+        window.addEventListener("wheel", scheduleSync, true);
         window.addEventListener("pointerdown", closeOnOutsidePointer, true);
         return () => {
-            window.removeEventListener("resize", syncPosition);
-            window.removeEventListener("scroll", syncPosition, true);
+            if (frame) window.cancelAnimationFrame(frame);
+            window.removeEventListener("resize", scheduleSync);
+            window.removeEventListener("scroll", scheduleSync, true);
+            window.removeEventListener("wheel", scheduleSync, true);
             window.removeEventListener("pointerdown", closeOnOutsidePointer, true);
         };
     }, [open]);
@@ -59,14 +70,7 @@ export function CanvasVideoSettingsPopover({ config, onConfigChange, buttonClass
     );
 }
 
-function VideoSettingsPortal({
-    buttonRect,
-    panelRef,
-    placement,
-    theme,
-    config,
-    onConfigChange,
-}: {
+function VideoSettingsPortal({ buttonRect, panelRef, placement, theme, config, onConfigChange }: {
     buttonRect: DOMRect;
     panelRef: RefObject<HTMLDivElement | null>;
     placement: CanvasVideoSettingsPopoverProps["placement"];
@@ -77,32 +81,33 @@ function VideoSettingsPortal({
     const width = 356;
     const gap = 8;
     const margin = 12;
-    const alignRight = placement?.endsWith("Right");
-    const alignCenter = placement === "top" || placement === "bottom";
-    const left = alignCenter ? buttonRect.left + buttonRect.width / 2 - width / 2 : alignRight ? buttonRect.right - width : buttonRect.left;
-    const topPlacement = placement?.startsWith("top");
+    const left = buttonRect.left + buttonRect.width / 2 - width / 2;
+    const topPlacement = placement?.startsWith("top") ?? true;
     const style = {
         position: "fixed",
         zIndex: 1200,
         width,
         left: Math.max(margin, Math.min(window.innerWidth - width - margin, left)),
         ...(topPlacement ? { bottom: window.innerHeight - buttonRect.top + gap, maxHeight: Math.max(260, buttonRect.top - margin * 2) } : { top: buttonRect.bottom + gap, maxHeight: Math.max(260, window.innerHeight - buttonRect.bottom - margin * 2) }),
-        background: theme.toolbar.panel,
+        background: theme.node.panel,
+        border: "1px solid " + theme.node.stroke,
         borderRadius: 18,
-        boxShadow: "0 18px 54px rgba(28, 25, 23, 0.16)",
+        boxShadow: "0 20px 64px rgba(0, 0, 0, 0.32)",
         padding: 18,
         overflowY: "auto",
+        overscrollBehavior: "contain",
         color: theme.node.text,
     } as const;
 
     return createPortal(
         <div
             ref={panelRef}
-            className="canvas-image-settings-popover"
+            className="canvas-settings-popover canvas-image-settings-popover"
             style={style}
             onPointerDown={(event) => event.stopPropagation()}
             onMouseDown={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
+            onWheel={(event) => event.stopPropagation()}
         >
             <VideoSettingsPanel config={config} onConfigChange={(key, value) => onConfigChange(key, value)} theme={theme} className="space-y-4" />
         </div>,

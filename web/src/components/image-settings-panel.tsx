@@ -1,8 +1,9 @@
-import { type ReactNode, useState } from "react";
-import { ConfigProvider, Switch } from "antd";
+import { type ReactNode, useEffect, useState } from "react";
+import { ConfigProvider } from "antd";
 import { useTranslation } from "react-i18next";
 
 import i18n from "@/i18n";
+import { AspectRatioPicker } from "@/components/aspect-ratio-picker";
 import { type CanvasTheme } from "@/lib/canvas-theme";
 import { computeMediaSize, inferMediaRatio, inferMediaScale, mediaRatioOptions, mediaScaleOptions, readMediaDimensions } from "@/lib/media-size";
 import type { AiConfig } from "@/stores/use-config-store";
@@ -29,7 +30,7 @@ type ImageSettingsPanelProps = {
     quickCount?: number;
 };
 
-export function ImageSettingsPanel({ config, onConfigChange, theme, showTitle = true, className = "w-[320px] space-y-4 rounded-2xl px-1 py-0.5", maxCount = 15, quickCount = 10 }: ImageSettingsPanelProps) {
+export function ImageSettingsPanel({ config, onConfigChange, theme, showTitle = true, className = "w-[320px] space-y-4 rounded-2xl px-1 py-0.5", maxCount = 15 }: ImageSettingsPanelProps) {
     const { t } = useTranslation();
     const [snapDimensionToStep, setSnapDimensionToStep] = useState(true);
     const quality = config.quality || "auto";
@@ -74,14 +75,10 @@ export function ImageSettingsPanel({ config, onConfigChange, theme, showTitle = 
                 <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-3">
                         <SettingTitle color={theme.node.muted}>{t("settingsPanels.image.size")}</SettingTitle>
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium" style={{ color: theme.node.muted }}>
-                                {t("settingsPanels.image.align16")}
-                            </span>
-                            <span title={t("settingsPanels.image.align16Hint")} onMouseDown={(event) => event.stopPropagation()}>
-                                <Switch size="small" checked={snapDimensionToStep} onChange={setSnapDimensionToStep} />
-                            </span>
-                        </div>
+                        <label className="flex items-center gap-2 text-xs font-medium" style={{ color: theme.node.muted }}>
+                            <span>按16倍数对齐</span>
+                            <CircleCheckToggle checked={snapDimensionToStep} theme={theme} onChange={setSnapDimensionToStep} label="按16倍数对齐" />
+                        </label>
                     </div>
                     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2.5">
                         <DimensionInput prefix="W" value={dimensions.width} disabled={selectedRatio === "auto"} theme={theme} alignToStep={snapDimensionToStep} onChange={(value) => updateDimension("width", value)} />
@@ -101,21 +98,15 @@ export function ImageSettingsPanel({ config, onConfigChange, theme, showTitle = 
                 </div>
                 <div className="space-y-2.5">
                     <SettingTitle color={theme.node.muted}>{t("settingsPanels.image.aspectRatio")}</SettingTitle>
-                    <div className="grid grid-cols-4 gap-2.5">
-                        {mediaRatioOptions.map((item) => (
-                            <button
-                                key={item.value}
-                                type="button"
-                                className="flex h-[72px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border bg-transparent text-sm transition hover:opacity-80"
-                                style={{ borderColor: selectedRatio === item.value ? theme.node.text : theme.node.stroke, background: "transparent", color: theme.node.text }}
-                                onMouseDown={(event) => event.stopPropagation()}
-                                onClick={() => selectRatio(item.value)}
-                            >
-                                <AspectIcon width={item.width} height={item.height} color={theme.node.text} />
-                                <span>{item.value === "auto" ? t("settingsPanels.common.auto") : item.value}</span>
-                            </button>
-                        ))}
-                    </div>
+                    <AspectRatioPicker
+                        options={mediaRatioOptions}
+                        value={selectedRatio}
+                        onChange={selectRatio}
+                        theme={theme}
+                        storageKey="infinite-canvas:image-ratio-usage"
+                        fallbackValues={["1:1", "16:9", "9:16"]}
+                        autoLabel={t("settingsPanels.common.auto")}
+                    />
                 </div>
                 <div className="flex items-center justify-between gap-3">
                     <div className="space-y-0.5">
@@ -124,20 +115,11 @@ export function ImageSettingsPanel({ config, onConfigChange, theme, showTitle = 
                             {t("settingsPanels.image.transparentHint")}
                         </div>
                     </div>
-                    <span onMouseDown={(event) => event.stopPropagation()}>
-                        <Switch size="small" checked={transparentBackground} onChange={(checked) => onConfigChange("background", checked ? "transparent" : "")} />
-                    </span>
+                    <CircleCheckToggle checked={transparentBackground} theme={theme} onChange={(checked) => onConfigChange("background", checked ? "transparent" : "")} label={t("settingsPanels.image.transparent")} />
                 </div>
                 <div className="space-y-2.5">
                     <SettingTitle color={theme.node.muted}>{t("settingsPanels.image.count")}</SettingTitle>
-                    <div className="grid grid-cols-4 gap-2.5">
-                        {Array.from({ length: quickCount }, (_, index) => index + 1).map((value) => (
-                            <OptionPill key={value} selected={count === value} theme={theme} onClick={() => onConfigChange("count", String(value))}>
-                                {t("settingsPanels.image.images", { count: value })}
-                            </OptionPill>
-                        ))}
-                        <CountInput value={count} max={maxCount} theme={theme} onChange={(value) => onConfigChange("count", String(value || 1))} />
-                    </div>
+                    <ImageCountPicker count={count} max={maxCount} theme={theme} onChange={(value) => onConfigChange("count", String(value))} />
                 </div>
             </div>
         </ImageSettingsTheme>
@@ -186,6 +168,70 @@ function OptionPill({ selected, theme, onClick, children }: { selected: boolean;
     );
 }
 
+function CircleCheckToggle({ checked, theme, onChange, label }: { checked: boolean; theme: CanvasTheme; onChange: (checked: boolean) => void; label: string }) {
+    return (
+        <button
+            type="button"
+            className="grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px] text-[12px] font-bold leading-none transition"
+            style={{ borderColor: checked ? theme.node.text : theme.node.muted, background: checked ? theme.node.text : "transparent", color: checked ? theme.node.panel : "transparent" }}
+            aria-label={label}
+            aria-pressed={checked}
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={() => onChange(!checked)}
+        >
+            ✓
+        </button>
+    );
+}
+
+function ImageCountPicker({ count, max, theme, onChange }: { count: number; max: number; theme: CanvasTheme; onChange: (count: number) => void }) {
+    const customSelected = count > 3;
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState(customSelected ? String(count) : "");
+
+    useEffect(() => {
+        if (!editing) setDraft(customSelected ? String(count) : "");
+    }, [count, customSelected, editing]);
+
+    const commit = () => {
+        const next = Math.max(1, Math.min(max, Math.floor(Number(draft) || 1)));
+        setEditing(false);
+        setDraft(String(next));
+        onChange(next);
+    };
+
+    return (
+        <div className="grid grid-cols-4 gap-2.5">
+            {[1, 2, 3].map((value) => (
+                <OptionPill key={value} selected={count === value} theme={theme} onClick={() => { setEditing(false); setDraft(""); onChange(value); }}>
+                    {value}张
+                </OptionPill>
+            ))}
+            {editing ? (
+                <label className="flex h-9 overflow-hidden rounded-full border text-sm" style={{ borderColor: theme.node.text, color: theme.node.text }}>
+                    <input
+                        autoFocus
+                        type="number"
+                        min={1}
+                        max={max}
+                        className="min-w-0 flex-1 bg-transparent px-2 text-center outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        value={draft}
+                        placeholder="数量"
+                        onChange={(event) => setDraft(event.target.value)}
+                        onBlur={commit}
+                        onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }}
+                        onMouseDown={(event) => event.stopPropagation()}
+                    />
+                </label>
+            ) : (
+                <OptionPill selected={customSelected} theme={theme} onClick={() => { setDraft(customSelected ? String(count) : ""); setEditing(true); }}>
+                    {customSelected ? `${count}张` : "自定义"}
+                </OptionPill>
+            )}
+        </div>
+    );
+}
+
 function DimensionInput({ prefix, value, disabled, theme, alignToStep, onChange }: { prefix: string; value: number; disabled: boolean; theme: CanvasTheme; alignToStep: boolean; onChange: (value: number | null) => void }) {
     const commit = (input: HTMLInputElement) => {
         const next = alignDimension(Math.max(1, Math.floor(Number(input.value) || value || 1024)), alignToStep);
@@ -212,35 +258,6 @@ function DimensionInput({ prefix, value, disabled, theme, alignToStep, onChange 
                 onMouseDown={(event) => event.stopPropagation()}
             />
         </label>
-    );
-}
-
-function CountInput({ value, max, theme, onChange }: { value: number; max: number; theme: CanvasTheme; onChange: (value: number | null) => void }) {
-    return (
-        <label className="col-span-2 flex h-9 overflow-hidden rounded-full border text-sm" style={{ borderColor: theme.node.stroke, color: theme.node.text }}>
-            <input
-                type="number"
-                min={1}
-                max={max}
-                className="min-w-0 flex-1 bg-transparent px-3 text-center outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                style={{ color: theme.node.text, WebkitTextFillColor: theme.node.text }}
-                value={value || ""}
-                onChange={(event) => onChange(Number(event.target.value) || null)}
-                onMouseDown={(event) => event.stopPropagation()}
-            />
-        </label>
-    );
-}
-
-function AspectIcon({ width, height, color }: { width: number; height: number; color: string }) {
-    if (!width || !height) return null;
-    const ratio = width / height;
-    const boxWidth = ratio >= 1 ? 24 : Math.max(10, 24 * ratio);
-    const boxHeight = ratio >= 1 ? Math.max(10, 24 / ratio) : 24;
-    return (
-        <span className="grid h-7 w-9 place-items-center">
-            <span className="border-2" style={{ width: boxWidth, height: boxHeight, borderColor: color }} />
-        </span>
     );
 }
 
