@@ -74,28 +74,29 @@ jobs:
           }
           EOF
 
-      - name: Delete previous alpha artifacts
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Save alpha package to runner storage
+        shell: bash
         run: |
-          node <<'NODE'
-          (async () => {
-            const repo = process.env.GITHUB_REPOSITORY;
-            const token = process.env.GH_TOKEN;
-            const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' };
-            const list = await fetch(`https://api.github.com/repos/${repo}/actions/artifacts?per_page=100`, { headers });
-            const data = await list.json();
-            for (const artifact of data.artifacts || []) {
-              if (/^infiniteCanvas-v.*-alpha-test$/.test(artifact.name)) {
-                await fetch(`https://api.github.com/repos/${repo}/actions/artifacts/${artifact.id}`, { method: 'DELETE', headers });
-              }
-            }
-          })();
-          NODE
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: infiniteCanvas-${{ steps.version.outputs.version }}-test
-          path: package
-          if-no-files-found: error
-          retention-days: 7
+          mkdir -p /runner/releases
+
+          ZIP_NAME="infiniteCanvas-${VERSION}-test.zip"
+
+          rm -f "/runner/releases/${ZIP_NAME}"
+
+          cd package
+          zip -r "/runner/releases/${ZIP_NAME}" .
+
+          echo "Saved test package:"
+          ls -lh "/runner/releases/${ZIP_NAME}"
+
+      # GitHub Artifact upload is intentionally disabled temporarily.
+      # It can be re-enabled when external distribution is required.
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: infiniteCanvas-${{ steps.version.outputs.version }}-test
+      #     path: package
+      #     if-no-files-found: error
+      #     retention-days: 7
