@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: real-client-preview-${{ github.ref }}
@@ -69,3 +70,52 @@ jobs:
           print(f'Package created: {target}.zip')
           PY
           ls -lh /runner/builds/infiniteCanvas-real-client.zip
+
+      - name: Remove previous downloadable test artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          repo = os.environ["GH_REPOSITORY]
+          token = os.environ["GH_TOKEN"]
+          name = "infiniteCanvas-chat-test"
+
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{repo}/actions/artifacts?name={name}&per_page=100",
+              headers={
+                  "Authorization": f"Bearer {token}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              payload = json.load(response)
+
+          for artifact in payload.get("artifacts", []):
+              delete_request = urllib.request.Request(
+                  f"https://api.github.com/repos/{repo}/actions/artifacts/{artifact['id']}",
+                  method="DELETE",
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+              )
+              with urllib.request.urlopen(delete_request, timeout=30):
+                  pass
+              print(f"Deleted old artifact: {artifact['id']}")
+          PY
+
+      - name: Upload latest downloadable test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: infiniteCanvas-chat-test
+          path: /runner/builds/infiniteCanvas-real-client.zip
+          if-no-files-found: error
+          retention-days: 1

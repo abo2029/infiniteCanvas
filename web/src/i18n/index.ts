@@ -10,6 +10,10 @@ const LOCALE_STORAGE_KEY = "infinite-canvas:locale";
 
 const zhCNReviewed = {
     ...zhCN,
+    settingsPanels: {
+        ...zhCN.settingsPanels,
+        video: { ...zhCN.settingsPanels.video, ratio: "宽高比" },
+    },
     canvas: {
         ...zhCN.canvas,
         nodeTypes: { ...zhCN.canvas.nodeTypes, config: "生成", group: "群组" },

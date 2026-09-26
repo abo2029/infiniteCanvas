@@ -21,6 +21,7 @@ type AspectRatioPickerProps = {
 type UsageMap = Record<string, number>;
 
 const ROLL_MS = 420;
+const ROW_STAGGER_MS = 90;
 
 export function AspectRatioPicker({ options, value, onChange, theme, storageKey, fallbackValues, autoLabel }: AspectRatioPickerProps) {
     const normalizedValue = options.some((item) => item.value === value) ? value : "auto";
@@ -33,6 +34,8 @@ export function AspectRatioPicker({ options, value, onChange, theme, storageKey,
 
     const selected = normalizedValue;
     const targetSlots = useMemo(() => buildSlots(selected, usage, options, fallbackValues), [fallbackValues, options, selected, usage]);
+    const rowCount = Math.max(1, Math.ceil(options.length / 4));
+    const collapseDelay = rowCount * ROW_STAGGER_MS + 160;
 
     useEffect(() => {
         if (rolling) return;
@@ -67,7 +70,7 @@ export function AspectRatioPicker({ options, value, onChange, theme, storageKey,
 
     const selectExpanded = (nextValue: string) => {
         setExpanded(false);
-        window.setTimeout(() => rollTo(nextValue), 220);
+        window.setTimeout(() => rollTo(nextValue), collapseDelay);
     };
 
     return (
@@ -104,22 +107,33 @@ export function AspectRatioPicker({ options, value, onChange, theme, storageKey,
                 </button>
             </div>
 
-            <div className={`grid grid-cols-4 gap-2.5 overflow-hidden transition-all duration-300 ${expanded ? "max-h-[320px] translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-1 opacity-0"}`}>
-                {options.map((item) => (
-                    <button
-                        key={item.value}
-                        type="button"
-                        className="flex h-[72px] flex-col items-center justify-end gap-1.5 rounded-xl border bg-transparent px-2 pb-2 pt-1 text-sm transition hover:opacity-80"
-                        style={{ borderColor: selected === item.value ? theme.node.text : theme.node.stroke, color: theme.node.text }}
-                        onMouseDown={(event) => event.stopPropagation()}
-                        onClick={() => selectExpanded(item.value)}
-                    >
-                        <span className="grid min-h-7 flex-1 place-items-center">
-                            <AspectIcon width={item.width} height={item.height} color={theme.node.text} />
-                        </span>
-                        <span className="shrink-0 leading-4">{item.value === "auto" ? autoLabel : item.value}</span>
-                    </button>
-                ))}
+            <div
+                className={`grid grid-cols-4 gap-2.5 overflow-hidden transition-[max-height] duration-300 ${expanded ? "max-h-[320px]" : "pointer-events-none max-h-0"}`}
+                style={{ transitionDelay: expanded ? "0ms" : `${collapseDelay}ms` }}
+            >
+                {options.map((item, index) => {
+                    const row = Math.floor(index / 4);
+                    const delay = expanded ? row * ROW_STAGGER_MS : (rowCount - 1 - row) * ROW_STAGGER_MS;
+                    return (
+                        <button
+                            key={item.value}
+                            type="button"
+                            className={`flex h-[72px] flex-col items-center justify-end gap-1.5 rounded-xl border bg-transparent px-2 pb-2 pt-1 text-sm transition-[opacity,transform,border-color] duration-300 hover:opacity-80 ${expanded ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0"}`}
+                            style={{
+                                borderColor: selected === item.value ? theme.node.text : theme.node.stroke,
+                                color: theme.node.text,
+                                transitionDelay: `${delay}ms`,
+                            }}
+                            onMouseDown={(event) => event.stopPropagation()}
+                            onClick={() => selectExpanded(item.value)}
+                        >
+                            <span className="grid min-h-7 flex-1 place-items-center">
+                                <AspectIcon width={item.width} height={item.height} color={theme.node.text} />
+                            </span>
+                            <span className="shrink-0 leading-4">{item.value === "auto" ? autoLabel : item.value}</span>
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );
@@ -146,7 +160,8 @@ function AspectIcon({ width, height, color }: { width: number; height: number; c
 
 function buildSlots(selected: string, usage: UsageMap, options: readonly RatioOption[], fallbackValues: readonly string[]) {
     const optionIndex = new Map(options.map((item, index) => [item.value, index]));
-    const fallbackIndex = new Map(fallbackValues.map((item, index) => [item, index]));
+    const preferredFallbacks = ["1:1", "16:9", ...fallbackValues].filter((value, index, values) => values.indexOf(value) === index);
+    const fallbackIndex = new Map(preferredFallbacks.map((item, index) => [item, index]));
     const ranked = options
         .map((item) => item.value)
         .filter((item) => item !== "auto" && item !== selected)

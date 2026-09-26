@@ -1,0 +1,157 @@
+/* Reviewed reference-content control sizing and generation-node controls. */
+
+div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) {
+    container-type: inline-size;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end !important;
+    overflow: hidden !important;
+}
+
+div:has(> span > .canvas-reference-settings-trigger) {
+    flex: 0 0.5 auto !important;
+    min-width: 64px !important;
+    max-width: 220px !important;
+}
+
+div:has(> span > .canvas-reference-settings-trigger) > span {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
+
+div:has(> span > .canvas-reference-camera-trigger) {
+    flex: 0 2 auto !important;
+    min-width: 35px !important;
+    max-width: 118px !important;
+}
+
+div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker {
+    flex: 0 1 auto !important;
+    width: max-content !important;
+    min-width: 35px !important;
+    max-width: 190px !important;
+}
+
+.canvas-reference-settings-trigger,
+.canvas-reference-camera-trigger,
+div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker {
+    height: 35px !important;
+    min-height: 35px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: color-mix(in srgb, var(--foreground) 9%, var(--background)) !important;
+}
+
+.canvas-reference-settings-trigger {
+    width: max-content !important;
+    min-width: 0 !important;
+    max-width: 220px !important;
+    border-color: transparent !important;
+}
+
+.canvas-reference-settings-trigger > span:not(.ant-btn-icon) {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.canvas-reference-camera-trigger {
+    width: max-content !important;
+    min-width: 35px !important;
+    max-width: 118px !important;
+    border-color: transparent !important;
+}
+
+.canvas-reference-camera-trigger-active {
+    border-color: color-mix(in srgb, var(--foreground) 78%, transparent) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 12%, transparent) !important;
+}
+
+div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker {
+    border-color: color-mix(in srgb, var(--foreground) 32%, transparent) !important;
+}
+
+div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .ant-btn-primary:last-child {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 35px !important;
+    height: 35px !important;
+    min-height: 35px !important;
+    padding-inline: 10px !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Camera label collapses first. */
+@container (max-width: 430px) {
+    .canvas-reference-camera-trigger > spanZnot(.ant-btn-icon) {
+        display: none !important;
+    }
+
+    .canvas-reference-camera-trigger {
+        width: 35px !important;
+        padding-inline: 0 !important;
+        gap: 0 !important;
+    }
+}
+
+/* Model label collapses only after the camera label is already gone. */
+@container (max-width: 355px) {
+    div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker {
+        width: 35px !important;
+        min-width: 35px !important;
+        padding-inline: 0 !important;
+        justify-content: center !important;
+        gap: 0 !important;
+    }
+
+    div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker .canvas-model-picker-text,
+    div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker .canvas-select-chevron {
+        display: none !important;
+    }
+}
+
+/* Generation node: model + settings mirror the reference-content controls. */
+div:has(> .canvas-composer-model-picker.canvas-compact-control) {
+    display: flex !important;
+    grid-template-columns: none !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+}
+
+.canvas-composer-model-picker.canvas-compact-control,
+.canvas-compact-control:not(.canvas-composer-model-picker) {
+    height: 35px !important;
+    min-height: 35px !important;
+    border-radius: 999px !important;
+    background: color-mix(in srgb, var(--foreground) 9%, var(--background)) !important;
+}
+
+.canvas-composer-model-picker.canvas-compact-control {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    border-color: color-mix(in srgb, var(--foreground) 32%, transparent) !important;
+}
+
+.canvas-compact-control:not(.canvas-composer-model-picker) {
+    flex: 0 1 auto !important;
+    width: max-content !important;
+    min-width: 0 !important;
+    max-width: 220px !important;
+    justify-content: center !important;
+    border-color: transparent !important;
+}
+
+/* Make the generation action visually distinct from the node surface and settings control. */
+div:has(.canvas-config-mode) > .ant-btn-primary {
+    background: color-mix(in srgb, var(--foreground) 18%, var(--background)) !important;
+    border: 1px solid color-mix(in srgb, var(--foreground) 34%, transparent) !important;
+    color: var(--foreground) !important;
+    box-shadow: none !important;
+}
+
+div:has(.canvas-config-mode) > .ant-btn-primary:hover {
+    background: color-mix(in srgb, var(--foreground) 23%, var(--background)) !important;
+}
