@@ -1,31 +1,38 @@
 /* Reviewed reference-content control sizing and generation-node controls. */
 
-div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) {
+/*
+ * IMPORTANT: keep all reference-control rules scoped to the prompt panel's
+ * right-side control row. The previous descendant :has() selector could also
+ * match higher flex ancestors and collapse the whole reference-content card.
+ */
+.mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden {
     container-type: inline-size;
     flex-wrap: nowrap !important;
     justify-content: flex-end !important;
     overflow: hidden !important;
 }
 
-div:has(> span > .canvas-reference-settings-trigger) {
+.mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > div:has(> span > .canvas-reference-settings-trigger),
+.mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > span:has(> .canvas-reference-settings-trigger) {
     flex: 0 0.5 auto !important;
     min-width: 64px !important;
     max-width: 220px !important;
 }
 
-div:has(> span > .canvas-reference-settings-trigger) > span {
+.mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > div:has(> span > .canvas-reference-settings-trigger) > span,
+.mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > span:has(> .canvas-reference-settings-trigger) {
     width: auto !important;
     min-width: 0 !important;
     max-width: 100% !important;
 }
 
-div:has(> span > .canvas-reference-camera-trigger) {
+.mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > div:has(> span > .canvas-reference-camera-trigger) {
     flex: 0 2 auto !important;
     min-width: 35px !important;
     max-width: 118px !important;
 }
 
-div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker {
+.mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > .canvas-composer-model-picker {
     flex: 0 1 auto !important;
     width: max-content !important;
     min-width: 35px !important;
@@ -34,7 +41,7 @@ div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-pick
 
 .canvas-reference-settings-trigger,
 .canvas-reference-camera-trigger,
-div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker {
+.mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > .canvas-composer-model-picker {
     height: 35px !important;
     min-height: 35px !important;
     align-items: center !important;
@@ -68,11 +75,11 @@ div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-pick
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 12%, transparent) !important;
 }
 
-div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker {
+.mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > .canvas-composer-model-picker {
     border-color: color-mix(in srgb, var(--foreground) 32%, transparent) !important;
 }
 
-div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .ant-btn-primary:last-child {
+.mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > .ant-btn-primary:last-child {
     flex: 0 0 auto !important;
     width: auto !important;
     min-width: 35px !important;
@@ -85,7 +92,7 @@ div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-pick
 
 /* Camera label collapses first. */
 @container (max-width: 430px) {
-    .canvas-reference-camera-trigger > spanZnot(.ant-btn-icon) {
+    .canvas-reference-camera-trigger > span:not(.ant-btn-icon) {
         display: none !important;
     }
 
@@ -98,7 +105,7 @@ div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-pick
 
 /* Model label collapses only after the camera label is already gone. */
 @container (max-width: 355px) {
-    div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker {
+    .mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > .canvas-composer-model-picker {
         width: 35px !important;
         min-width: 35px !important;
         padding-inline: 0 !important;
@@ -106,8 +113,8 @@ div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-pick
         gap: 0 !important;
     }
 
-    div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker .canvas-model-picker-text,
-    div.flex:has(.canvas-reference-settings-trigger):has(.canvas-composer-model-picker) > .canvas-composer-model-picker .canvas-select-chevron {
+    .mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > .canvas-composer-model-picker .canvas-model-picker-text,
+    .mt-2.grid > .flex.min-w-0.flex-wrap.items-center.justify-end.gap-2.overflow-hidden > .canvas-composer-model-picker .canvas-select-chevron {
         display: none !important;
     }
 }
