@@ -1,6 +1,7 @@
 name: Test Build Alpha
 
 # Trigger alpha package build
+# Node runtime fixed for Vite compatibility
 
 on:
   push:
