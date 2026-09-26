@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  actions: write
 
 concurrency:
   group: real-client-preview-${{ github.ref }}
@@ -42,10 +41,10 @@ jobs:
       - name: Build web client
         run: bun run build
 
-      - name: Upload real client
-        uses: actions/upload-artifact@v4
-        with:
-          name: infiniteCanvas-real-client
-          path: web/dist
-          if-no-files-found: error
-          retention-days: 7
+      - name: Package real client
+        run: |
+          mkdir -p /runner/builds
+          rm -f /runner/builds/infiniteCanvas-real-client.zip
+          cd dist
+          zip -r /runner/builds/infiniteCanvas-real-client.zip .
+          echo "Package created: /runner/builds/infiniteCanvas-real-client.zip"
