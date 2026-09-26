@@ -1,0 +1,49 @@
+name: Test Build Alpha
+
+# Trigger build package pipeline
+
+on:
+  push:
+    branches:
+      - feat/tiger-camera-port
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  build:
+    runs-on:
+      - self-hosted
+      - infinitecanvas
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        working-directory: web
+        run: bun install
+
+      - name: Build web client
+        working-directory: web
+        run: bun run build
+
+      - name: Package alpha test build
+        run: |
+          VERSION=v0.1.0-alpha
+          mkdir -p package
+          cp -r web/dist package/
+          cp START_PREVIEW_MAC.command START_PREVIEW_WINDOWS.bat package/ 2>/dev/null || true
+          cat > package/BUILD_INFO.json <<EOF
+          {"version":"${VERSION}","channel":"alpha","platform":["macOS","Windows11"],"commit":"${GITHUB_SHA}"}
+          EOF
+          cd package
+          zip -r ../infiniteCanvas-${VERSION}-test.zip .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: infiniteCanvas-v0.1.0-alpha-test
+          path: infiniteCanvas-v0.1.0-alpha-test.zip
+          retention-days: 7
