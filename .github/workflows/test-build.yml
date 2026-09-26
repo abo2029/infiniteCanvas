@@ -1,11 +1,9 @@
 name: Test Build Alpha
 
-# Trigger build package pipeline
-
 on:
   push:
     branches:
-      - feat/tiger-camera-port
+      - test
   workflow_dispatch:
 
 permissions:
