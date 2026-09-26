@@ -1,5 +1,4 @@
 name: Build real client preview
-# trigger build
 
 on:
   push:
@@ -26,10 +25,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.13
+
+      - name: Show runtime versions
+        run: |
+          node --version
+          bun --version
 
       - name: Install dependencies
         run: |
@@ -42,10 +51,21 @@ jobs:
       - name: Build web client
         run: bun run build
 
-      - name: Package real client
+      - name: Package real client to NAS
+        shell: bash
         run: |
           mkdir -p /runner/builds
           rm -f /runner/builds/infiniteCanvas-real-client.zip
-          cd dist
-          zip -r /runner/builds/infiniteCanvas-real-client.zip .
-          echo "Package created: /runner/builds/infiniteCanvas-real-client.zip"
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+
+          dist = Path('dist')
+          if not dist.is_dir():
+              raise SystemExit('dist directory was not created')
+
+          target = Path('/runner/builds/infiniteCanvas-real-client')
+          shutil.make_archive(str(target), 'zip', root_dir=dist)
+          print(f'Package created: {target}.zip')
+          PY
+          ls -lh /runner/builds/infiniteCanvas-real-client.zip
